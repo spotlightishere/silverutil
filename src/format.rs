@@ -1,19 +1,20 @@
 use std::fmt;
 
-use binrw::{binrw, io::SeekFrom};
+use binrw::{binrw, io::SeekFrom, PosValue};
 
 #[binrw]
 #[brw(little)]
-pub struct SilverDB {
+pub struct SilverDBFormat {
     pub header: SilverDBHeader,
     #[br(count = header.section_count)]
     pub sections: Vec<SectionHeader>,
 
     // TODO(spotlightishere): This should be removed once proper offset
     // determination via binrw itself is figured out.
-    #[br(parse_with = binrw::until_eof)]
+    // TODO(spotlightishere): Please remove the internal offset hack...
+    #[br(seek_before = SeekFrom::Start(sections.last().expect("should have last section").entries.last().expect("should have last entry").internal_offset.pos), parse_with = binrw::until_eof)]
     #[bw(ignore)]
-    remaining_data: Vec<u8>,
+    pub remaining_data: Vec<u8>,
 }
 
 #[binrw]
@@ -56,6 +57,11 @@ pub struct EntryMetadata {
     pub data_offset: u32,
     // The length of this entry.
     pub data_size: u32,
+
+    // TODO(spotlightishere): Remove
+    // Cheap hack to determine final offset of data
+    #[bw(ignore)]
+    internal_offset: PosValue<()>,
 }
 
 /// Since we cannot implement on type aliases, this struct (containing a single u32)

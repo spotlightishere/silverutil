@@ -1,7 +1,7 @@
-use binrw::BinRead;
-use format::SilverDB;
+use database::SilverDB;
 use std::{env, fs::File};
 
+mod database;
 mod format;
 
 fn main() {
@@ -24,25 +24,21 @@ fn main() {
     }
 
     // Parse our file!
-    let mut database_file = File::open(database_path).expect("unable to open SilverDB database");
-    let database = SilverDB::read(&mut database_file).expect("unable to parse SilverDB database");
-    if database.header.version != 3 {
-        panic!("Unknown database version!");
-    }
+    let database_file = File::open(database_path).expect("unable to open SilverDB database");
+    let database = SilverDB::read_file(database_file).expect("unable to parse SilverDB database");
 
     println!("Found valid SilverDB database!");
-    println!("There are {} sections.", database.header.section_count);
+    println!("There are {} sections.", database.sections.len());
     println!("Sections:");
-    let sections = &database.sections;
-    for section in sections {
+    let sections = database.sections;
+    for section in &sections {
         println!("-------------------------------------------");
-        println!("Section: {}", section.magic);
-        println!("\tEntry count: {}", section.entry_count);
+        println!("Section: {}", section.section_type);
+        println!("\tEntry count: {}", section.entries.len());
         println!("\tEntries:");
         for entry in &section.entries {
             println!("\t\t- Entry ID: {:08x}", entry.id);
-            println!("\t\t  Size: {}", entry.data_size);
-            println!("\t\t  Offset: {}", entry.data_offset);
+            println!("\t\t  Size: {}", entry.contents.len());
         }
         println!("-------------------------------------------");
     }
@@ -51,12 +47,12 @@ fn main() {
     let string_section = sections
         .as_slice()
         .iter()
-        .find(|&section| section.magic.magic == 0x53747220)
+        .find(|&section| section.section_type == 0x53747220)
         .expect("unable to find strings section");
     for string_entry in string_section.entries.as_slice() {
         println!(
             "String entry unadjusted offset: {}",
-            string_entry.data_offset
+            String::from_utf8(string_entry.contents.to_owned()).expect("should be a string")
         )
     }
 }

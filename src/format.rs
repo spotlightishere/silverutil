@@ -1,6 +1,6 @@
 use std::fmt;
 
-use binrw::binrw;
+use binrw::{binrw, io::SeekFrom};
 
 #[binrw]
 #[brw(little)]
@@ -8,6 +8,12 @@ pub struct SilverDB {
     pub header: SilverDBHeader,
     #[br(count = header.section_count)]
     pub sections: Vec<SectionHeader>,
+
+    // TODO(spotlightishere): This should be removed once proper offset
+    // determination via binrw itself is figured out.
+    #[br(parse_with = binrw::until_eof)]
+    #[bw(ignore)]
+    remaining_data: Vec<u8>,
 }
 
 #[binrw]
@@ -24,18 +30,32 @@ pub struct SilverDBHeader {
 pub struct SectionHeader {
     // The magic identifying this section (i.e. 'Str ', 'BMap', 'LDTm', etc.)
     pub magic: FourCC,
-    pub file_count: u32,
-    // Possibly related to flags?
+    // The amount of entries contained within this section.
+    pub entry_count: u32,
+    // Possibly flags for this section?
     pub unknown_value: u32,
     // Offset to the section, relative to the start of the file (0x0).
-    pub file_entry_offset: u32,
+    pub entry_offset: u32,
+
+    #[br(count = entry_count, seek_before = u32_seek_offset(&entry_offset), restore_position)]
+    pub entries: Vec<EntryMetadata>,
+}
+
+/// Helper to assist passing with `SeekFrom` because it does not
+/// permit dereferencing otherwise.
+fn u32_seek_offset(offest: &u32) -> SeekFrom {
+    SeekFrom::Start((*offest).into())
 }
 
 #[binrw]
-pub struct FileEntry {
+pub struct EntryMetadata {
+    // The ID is how this entry is referenced. For example, 0x0dad06d8.
     pub id: u32,
-    pub offset: u32,
-    pub size: u32,
+    // The offset to where this entry's data is located.
+    // This is relative to where data begins (i.e. after header, section header, and entry info.)
+    pub data_offset: u32,
+    // The length of this entry.
+    pub data_size: u32,
 }
 
 /// Since we cannot implement on type aliases, this struct (containing a single u32)

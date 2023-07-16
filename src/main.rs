@@ -33,10 +33,30 @@ fn main() {
     println!("Found valid SilverDB database!");
     println!("There are {} sections.", database.header.section_count);
     println!("Sections:");
-    for section in database.sections {
+    let sections = &database.sections;
+    for section in sections {
         println!("-------------------------------------------");
         println!("Section: {}", section.magic);
-        println!("\tFile count: {}", section.file_count);
+        println!("\tEntry count: {}", section.entry_count);
+        println!("\tEntries:");
+        for entry in &section.entries {
+            println!("\t\t- Entry ID: {:08x}", entry.id);
+            println!("\t\t  Size: {}", entry.data_size);
+            println!("\t\t  Offset: {}", entry.data_offset);
+        }
         println!("-------------------------------------------");
+    }
+
+    // Test: Print all 'Str ' types
+    let string_section = sections
+        .as_slice()
+        .iter()
+        .find(|&section| section.magic.magic == 0x53747220)
+        .expect("unable to find strings section");
+    for string_entry in string_section.entries.as_slice() {
+        println!(
+            "String entry unadjusted offset: {}",
+            string_entry.data_offset
+        )
     }
 }

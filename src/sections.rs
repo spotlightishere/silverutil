@@ -61,8 +61,8 @@ impl fmt::Display for SectionType {
             SectionType::Unknown(magic) => {
                 // As we parsed in little-endian, we now handle this as big-endian in order to have it be readable.
                 let magic_value = u32::from_le_bytes(*magic);
-                let magic_string =
-                    String::from_utf8(magic.to_vec()).unwrap_or("invalid ASCII magic".to_string());
+                let magic_string = String::from_utf8(magic_value.to_be_bytes().to_vec())
+                    .unwrap_or("invalid ASCII magic".to_string());
                 format!("{:?} (0x{:08x})", magic_string, magic_value)
             }
         };

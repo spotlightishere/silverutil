@@ -1,18 +1,14 @@
-use binrw::{binrw, io::SeekFrom};
+use binrw::{args, binrw, io::SeekFrom};
 
 #[binrw]
 #[brw(little)]
 pub struct SilverDBFormat {
     pub header: SilverDBHeader,
-    #[br(count = header.section_count)]
-    pub sections: Vec<SectionHeader>,
 
-    // TODO(spotlightishere): This should be removed once proper offset
-    // determination via binrw itself is figured out.
-    // TODO(spotlightishere): Please remove the internal offset hack...
-    #[br(seek_before = SeekFrom::Start(header.header_length.into()), parse_with = binrw::until_eof)]
-    #[bw(ignore)]
-    pub remaining_data: Vec<u8>,
+    // When reading, we need to pass on the header length to sections
+    // so that resource content location can be determined.
+    #[br(args { inner: args! { header_length: header.header_length } }, count = header.section_count)]
+    pub sections: Vec<SectionHeader>,
 }
 
 #[binrw]
@@ -29,6 +25,9 @@ pub struct SilverDBHeader {
 pub type SectionMagic = [u8; 4];
 
 #[binrw]
+#[br(import {
+    header_length: u32
+})]
 pub struct SectionHeader {
     // The magic identifying this section (i.e. 'Str ', 'BMap', 'LDTm', etc.)
     pub magic: SectionMagic,
@@ -39,11 +38,16 @@ pub struct SectionHeader {
     // Offset to array of resource entries, relative to the start of the file (0x0).
     pub resource_offset: u32,
 
-    #[br(count = resource_count, seek_before = SeekFrom::Start(resource_offset.into()), restore_position)]
+    // Similar to SilverDBFormat, we need to pass on the header length to
+    // sections so that resource content location can be determined.
+    #[br(args { inner: args! { header_length } }, count = resource_count, seek_before = SeekFrom::Start(resource_offset.into()), restore_position)]
     pub resources: Vec<ResourceMetadata>,
 }
 
 #[binrw]
+#[br(import {
+    header_length: u32
+})]
 pub struct ResourceMetadata {
     // The ID is how this resource is referenced. For example, 0x0dad06d8.
     pub id: u32,
@@ -52,4 +56,9 @@ pub struct ResourceMetadata {
     pub data_offset: u32,
     // The length of this resource.
     pub data_size: u32,
+
+    // Again, our data is relative to where the header ends.
+    // We know this location via the passed `header_length` argument.
+    #[br(seek_before = SeekFrom::Start((header_length + data_offset).into()), count=data_size, restore_position)]
+    pub contents: Vec<u8>,
 }

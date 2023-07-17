@@ -39,7 +39,6 @@ impl SilverDB {
 
         // Sanity check that should probably be an error:
         assert!(database_file.header.version == 3);
-        println!("starting at {}", database_file.remaining_data.len());
 
         // Next, create the high-level representation.
         let mut sections: Vec<SilverSection> = Vec::new();
@@ -48,17 +47,10 @@ impl SilverDB {
             let mut resources: Vec<SilverResource> = Vec::new();
 
             for raw_resource in raw_section.resources {
-                // We now need to parse data from `remaining_data` ourselves. :(
-                //
-                // TODO(spotlightishere): Having data being read separately is... messy, to say the least.
-                // Perhaps it will be better once https://github.com/jam1garner/binrw/pull/210 is merged.
-                let resource_start: usize = raw_resource.data_offset as usize;
-                let resource_end = (raw_resource.data_offset + raw_resource.data_size) as usize;
-                let raw_resource_data = &database_file.remaining_data[resource_start..resource_end];
-
+                // TODO(spotlightishere): Have section contents parsed accordingly
                 resources.push(SilverResource {
                     id: raw_resource.id,
-                    contents: raw_resource_data.to_vec(),
+                    contents: raw_resource.contents,
                 });
             }
 

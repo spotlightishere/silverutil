@@ -12,7 +12,7 @@ pub struct SilverDBFormat {
     // TODO(spotlightishere): This should be removed once proper offset
     // determination via binrw itself is figured out.
     // TODO(spotlightishere): Please remove the internal offset hack...
-    #[br(seek_before = SeekFrom::Start(sections.last().expect("should have last section").entries.last().expect("should have last entry").internal_offset.pos), parse_with = binrw::until_eof)]
+    #[br(seek_before = SeekFrom::Start(sections.last().expect("should have last section").resources.last().expect("should have last resource").internal_offset.pos), parse_with = binrw::until_eof)]
     #[bw(ignore)]
     pub remaining_data: Vec<u8>,
 }
@@ -31,15 +31,15 @@ pub struct SilverDBHeader {
 pub struct SectionHeader {
     // The magic identifying this section (i.e. 'Str ', 'BMap', 'LDTm', etc.)
     pub magic: FourCC,
-    // The amount of entries contained within this section.
-    pub entry_count: u32,
+    // The amount of resources contained within this section.
+    pub resource_count: u32,
     // Possibly flags for this section?
     pub unknown_value: u32,
-    // Offset to the section, relative to the start of the file (0x0).
-    pub entry_offset: u32,
+    // Offset to array of resource entries, relative to the start of the file (0x0).
+    pub resource_offset: u32,
 
-    #[br(count = entry_count, seek_before = u32_seek_offset(&entry_offset), restore_position)]
-    pub entries: Vec<EntryMetadata>,
+    #[br(count = resource_count, seek_before = u32_seek_offset(&resource_offset), restore_position)]
+    pub resources: Vec<ResourceMetadata>,
 }
 
 /// Helper to assist passing with `SeekFrom` because it does not
@@ -49,13 +49,13 @@ fn u32_seek_offset(offest: &u32) -> SeekFrom {
 }
 
 #[binrw]
-pub struct EntryMetadata {
-    // The ID is how this entry is referenced. For example, 0x0dad06d8.
+pub struct ResourceMetadata {
+    // The ID is how this resource is referenced. For example, 0x0dad06d8.
     pub id: u32,
-    // The offset to where this entry's data is located.
-    // This is relative to where data begins (i.e. after header, section header, and entry info.)
+    // The offset to where this resource's data is located.
+    // This is relative to where data begins (i.e. after header, section header, and resource entries.)
     pub data_offset: u32,
-    // The length of this entry.
+    // The length of this resource.
     pub data_size: u32,
 
     // TODO(spotlightishere): Remove

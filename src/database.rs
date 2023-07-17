@@ -15,13 +15,13 @@ pub struct SilverSection {
     // TODO: This should be an enum switching on magic
     /// The magic identifying this section (i.e. 'Str ', 'BMap', 'LDTm', etc.)
     pub section_type: u32,
-    // Entries within this section.
-    pub entries: Vec<SilverEntry>,
+    // Resources within this section.
+    pub resources: Vec<SilverResource>,
 }
 
-/// A high-level representation of entries within a section.
-pub struct SilverEntry {
-    /// An ID used to identify this entry. For example, 0x0dad06d8.
+/// A high-level representation of resources within a section.
+pub struct SilverResource {
+    /// An ID used to identify this resources. For example, 0x0dad06d8.
     pub id: u32,
     // TODO: This should be switchable on magic
     pub contents: Vec<u8>,
@@ -44,27 +44,27 @@ impl SilverDB {
         let mut sections: Vec<SilverSection> = Vec::new();
         for raw_section in database_file.sections {
             let section_type = raw_section.magic.magic;
-            let mut entries: Vec<SilverEntry> = Vec::new();
+            let mut resources: Vec<SilverResource> = Vec::new();
 
-            for raw_entry in raw_section.entries {
+            for raw_resource in raw_section.resources {
                 // We now need to parse data from `remaining_data` ourselves. :(
                 //
                 // TODO(spotlightishere): Having data being read separately is... messy, to say the least.
                 // Perhaps it will be better once https://github.com/jam1garner/binrw/pull/210 is merged.
-                let entry_start = raw_entry.data_offset as usize;
-                let entry_end = (raw_entry.data_offset + raw_entry.data_size) as usize;
-                let raw_entry_data = &database_file.remaining_data[entry_start..entry_end];
+                let resource_start: usize = raw_resource.data_offset as usize;
+                let resource_end = (raw_resource.data_offset + raw_resource.data_size) as usize;
+                let raw_resource_data = &database_file.remaining_data[resource_start..resource_end];
 
-                entries.push(SilverEntry {
-                    id: raw_entry.id,
-                    contents: raw_entry_data.to_vec(),
+                resources.push(SilverResource {
+                    id: raw_resource.id,
+                    contents: raw_resource_data.to_vec(),
                 });
             }
 
             // TODO(spotlightishere): Have section type represented by enum
             sections.push(SilverSection {
                 section_type,
-                entries,
+                resources,
             });
         }
 

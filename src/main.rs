@@ -1,6 +1,8 @@
 use database::SilverDB;
 use std::{env, fs::File};
 
+use crate::format::FourCC;
+
 mod database;
 mod format;
 
@@ -33,12 +35,17 @@ fn main() {
     let sections = database.sections;
     for section in &sections {
         println!("-------------------------------------------");
-        println!("Section: {}", section.section_type);
-        println!("\tEntry count: {}", section.entries.len());
-        println!("\tEntries:");
-        for entry in &section.entries {
-            println!("\t\t- Entry ID: {:08x}", entry.id);
-            println!("\t\t  Size: {}", entry.contents.len());
+        println!(
+            "Section: {}",
+            FourCC {
+                magic: section.section_type
+            }
+        );
+        println!("\tResource count: {}", section.resources.len());
+        println!("\tResources:");
+        for resource in &section.resources {
+            println!("\t\t- Resource ID: {:08x}", resource.id);
+            println!("\t\t  Size: {}", resource.contents.len());
         }
         println!("-------------------------------------------");
     }
@@ -49,10 +56,10 @@ fn main() {
         .iter()
         .find(|&section| section.section_type == 0x53747220)
         .expect("unable to find strings section");
-    for string_entry in string_section.entries.as_slice() {
+    for string_resource in string_section.resources.as_slice() {
         println!(
-            "String entry unadjusted offset: {}",
-            String::from_utf8(string_entry.contents.to_owned()).expect("should be a string")
+            "String resource: {}",
+            String::from_utf8(string_resource.contents.to_owned()).expect("should be a string")
         )
     }
 }

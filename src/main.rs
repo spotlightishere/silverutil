@@ -1,6 +1,7 @@
 use database::SilverDB;
 use std::{env, fs::File};
 
+use crate::sections::SectionContent;
 use crate::sections::SectionType;
 
 mod database;
@@ -41,7 +42,6 @@ fn main() {
         println!("\tResources:");
         for resource in &section.resources {
             println!("\t\t- Resource ID: {:08x}", resource.id);
-            println!("\t\t  Size: {}", resource.contents.len());
         }
         println!("-------------------------------------------");
     }
@@ -53,9 +53,9 @@ fn main() {
         .find(|&section| section.section_type == SectionType::String)
         .expect("unable to find strings section");
     for string_resource in string_section.resources.as_slice() {
-        println!(
-            "String resource: {}",
-            String::from_utf8(string_resource.contents.to_owned()).expect("should be a string")
-        )
+        match &string_resource.contents {
+            SectionContent::String(value) => println!("String resource: {}", value),
+            _ => println!("Unknown content type!"),
+        }
     }
 }

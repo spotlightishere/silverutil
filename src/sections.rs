@@ -1,5 +1,6 @@
 use std::fmt;
 
+use crate::database::SilverError;
 use crate::format::SectionMagic;
 
 /// Possible section types.
@@ -43,12 +44,13 @@ impl SectionType {
         }
     }
 
-    // /// Parses contents to a higher-lvel type accordingly based on their section.
-    // fn parse_section(&self, raw_data: Vec<u8>) -> Result<SectionContent, Error> {
-    //     match self {
-    //         SectionType::String => Ok(SectionContent::String(String::from_utf8(raw_data)?)),
-    //     }
-    // }
+    /// Parses contents to a higher-level type accordingly based on their section.
+    pub fn parse_section(&self, raw_data: Vec<u8>) -> Result<SectionContent, SilverError> {
+        match self {
+            SectionType::String => Ok(SectionContent::String(String::from_utf8(raw_data)?)),
+            _ => Ok(SectionContent::Unknown(raw_data)),
+        }
+    }
 }
 
 impl fmt::Display for SectionType {

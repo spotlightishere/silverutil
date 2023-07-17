@@ -16,7 +16,7 @@ Although sections define an offset to resource metadata, resource metadata is im
 | ...    | [Resource metadata](#resource-metadata) | Repeats for as many resource entries defined in sections. |
 | ...    | Resource contents  | All data offsets base off of this. |
 
-## Database Header
+### Database Header
 All known databases have a version of `3`.
 
 | Offset | Type | Description                       |
@@ -25,13 +25,20 @@ All known databases have a version of `3`.
 | 0x4    | u32  | Unknown. Possibly length related? |
 | 0x8    | u32  | Section count                     |
 
-## Section Metadata
+### Section Metadata
 | Offset | Type | Description                             |
 |--------|------|-----------------------------------------|
 | 0x0    | u32  | [Section type](#section-types).         |
 | 0x4    | u32  | Amount of resource entries this section contains |
 | 0x8    | u32  | Unknown. Possibly related to flags.     |
 | 0xc    | u32  | Offset to where this section's [resource metadata](#resource-metadata) array begins, relative to the file's start (0x0). |
+
+### Resource Metadata
+| Offset | Type | Description                  |
+|--------|------|------------------------------|
+| 0x0    | u32  | ID of this resource          |
+| 0x4    | u32  | Offset to this resource's data, relative to file contents (proceeding resource metadata entries) |
+| 0x8    | u32  | Resource size                |
 
 ## Section types
 This section should not be considered exhaustive, as its information is largely focused on the 5th generation iPod nano.
@@ -83,10 +90,3 @@ The names of sections are presented in big-endian for readability (i.e. `BMap` i
 | `VLyt` | `0x564c7974` |  |
 | `VSlt` | `0x56536c74` |  |
 | `View` | `0x56696577` |  |
-
-## Resource Metadata
-| Offset | Type | Description                  |
-|--------|------|------------------------------|
-| 0x0    | u32  | ID of this resource          |
-| 0x4    | u32  | Offset to this resource's data, relative to file contents (proceeding resource metadata entries) |
-| 0x8    | u32  | Resource size                |

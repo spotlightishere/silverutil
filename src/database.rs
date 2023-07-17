@@ -2,7 +2,7 @@ use std::{fs::File, io};
 
 use binrw::{BinRead, Error};
 
-use crate::format::SilverDBFormat;
+use crate::{format::SilverDBFormat, sections::SectionType};
 
 /// A high-level representation of a SilverDB file.
 pub struct SilverDB {
@@ -14,7 +14,8 @@ pub struct SilverDB {
 pub struct SilverSection {
     // TODO: This should be an enum switching on magic
     /// The magic identifying this section (i.e. 'Str ', 'BMap', 'LDTm', etc.)
-    pub section_type: u32,
+    pub section_type: SectionType,
+
     // Resources within this section.
     pub resources: Vec<SilverResource>,
 }
@@ -43,7 +44,7 @@ impl SilverDB {
         // Next, create the high-level representation.
         let mut sections: Vec<SilverSection> = Vec::new();
         for raw_section in database_file.sections {
-            let section_type = raw_section.magic.magic;
+            let section_type = SectionType::from_magic(raw_section.magic);
             let mut resources: Vec<SilverResource> = Vec::new();
 
             for raw_resource in raw_section.resources {

@@ -1,10 +1,11 @@
 use database::SilverDB;
 use std::{env, fs::File};
 
-use crate::format::FourCC;
+use crate::sections::SectionType;
 
 mod database;
 mod format;
+mod sections;
 
 fn main() {
     // TODO: Implement proper flags eventually
@@ -35,12 +36,7 @@ fn main() {
     let sections = database.sections;
     for section in &sections {
         println!("-------------------------------------------");
-        println!(
-            "Section: {}",
-            FourCC {
-                magic: section.section_type
-            }
-        );
+        println!("Section: {}", section.section_type);
         println!("\tResource count: {}", section.resources.len());
         println!("\tResources:");
         for resource in &section.resources {
@@ -54,7 +50,7 @@ fn main() {
     let string_section = sections
         .as_slice()
         .iter()
-        .find(|&section| section.section_type == 0x53747220)
+        .find(|&section| section.section_type == SectionType::String)
         .expect("unable to find strings section");
     for string_resource in string_section.resources.as_slice() {
         println!(

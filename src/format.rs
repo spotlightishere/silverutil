@@ -1,5 +1,3 @@
-use std::fmt;
-
 use binrw::{binrw, io::SeekFrom, PosValue};
 
 #[binrw]
@@ -27,10 +25,12 @@ pub struct SilverDBHeader {
     pub section_count: u32,
 }
 
+pub type SectionMagic = [u8; 4];
+
 #[binrw]
 pub struct SectionHeader {
     // The magic identifying this section (i.e. 'Str ', 'BMap', 'LDTm', etc.)
-    pub magic: FourCC,
+    pub magic: SectionMagic,
     // The amount of resources contained within this section.
     pub resource_count: u32,
     // Possibly flags for this section?
@@ -62,24 +62,4 @@ pub struct ResourceMetadata {
     // Cheap hack to determine final offset of data
     #[bw(ignore)]
     internal_offset: PosValue<()>,
-}
-
-/// Since we cannot implement on type aliases, this struct (containing a single u32)
-/// assists to help us display this magic as both its ASCII and hexadecimal representations.
-#[binrw]
-pub struct FourCC {
-    pub magic: u32,
-}
-
-impl fmt::Display for FourCC {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        // We parsed in little endian, so now we handle this as
-        // big endian in order to have it be readable.
-        let magic_bytes = self.magic.to_be_bytes();
-        let magic_string =
-            String::from_utf8(magic_bytes.to_vec()).unwrap_or("invalid ASCII magic".to_string());
-        write!(f, "{:?} (0x{:08x})", magic_string, self.magic)?;
-
-        Ok(())
-    }
 }

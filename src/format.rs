@@ -1,4 +1,4 @@
-use binrw::{binrw, io::SeekFrom, PosValue};
+use binrw::{binrw, io::SeekFrom};
 
 #[binrw]
 #[brw(little)]
@@ -10,7 +10,7 @@ pub struct SilverDBFormat {
     // TODO(spotlightishere): This should be removed once proper offset
     // determination via binrw itself is figured out.
     // TODO(spotlightishere): Please remove the internal offset hack...
-    #[br(seek_before = SeekFrom::Start(sections.last().expect("should have last section").resources.last().expect("should have last resource").internal_offset.pos), parse_with = binrw::until_eof)]
+    #[br(seek_before = SeekFrom::Start(header.header_length.into()), parse_with = binrw::until_eof)]
     #[bw(ignore)]
     pub remaining_data: Vec<u8>,
 }
@@ -19,8 +19,9 @@ pub struct SilverDBFormat {
 pub struct SilverDBHeader {
     // 0x03 across 5th, 6th, and 7th generation iPod nanos.
     pub version: u32,
-    // Unknown - possibly length related?
-    pub unknown_value: u32,
+    // The length consumed by header content.
+    // Resource data begins immediately after all header values.
+    pub header_length: u32,
     // The amount of sections this database contains.
     pub section_count: u32,
 }
@@ -38,14 +39,8 @@ pub struct SectionHeader {
     // Offset to array of resource entries, relative to the start of the file (0x0).
     pub resource_offset: u32,
 
-    #[br(count = resource_count, seek_before = u32_seek_offset(&resource_offset), restore_position)]
+    #[br(count = resource_count, seek_before = SeekFrom::Start(resource_offset.into()), restore_position)]
     pub resources: Vec<ResourceMetadata>,
-}
-
-/// Helper to assist passing with `SeekFrom` because it does not
-/// permit dereferencing otherwise.
-fn u32_seek_offset(offest: &u32) -> SeekFrom {
-    SeekFrom::Start((*offest).into())
 }
 
 #[binrw]
@@ -57,9 +52,4 @@ pub struct ResourceMetadata {
     pub data_offset: u32,
     // The length of this resource.
     pub data_size: u32,
-
-    // TODO(spotlightishere): Remove
-    // Cheap hack to determine final offset of data
-    #[bw(ignore)]
-    internal_offset: PosValue<()>,
 }

@@ -17,13 +17,13 @@ Although sections define an offset to resource metadata, resource metadata is im
 | ...    | Resource contents  | All data offsets base off of this. |
 
 ### Database Header
-All known databases have a version of `3`.
+All known firmware versions ensure a database version of `3`.
 
-| Offset | Type | Description                       |
-|--------|------|-----------------------------------|
-| 0x0    | u32  | Version                           |
-| 0x4    | u32  | Unknown. Possibly length related? |
-| 0x8    | u32  | Section count                     |
+| Offset | Type | Description   |
+|--------|------|---------------|
+| 0x0    | u32  | Version       |
+| 0x4    | u32  | Header length |
+| 0x8    | u32  | Section count |
 
 ### Section Metadata
 | Offset | Type | Description                             |

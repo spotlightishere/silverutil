@@ -13,14 +13,18 @@ seq:
     repeat: expr
     repeat-expr: header.section_count
 types:
-  # Consistent for all SilverDB variants - internal OSOS, image, and strings.
+  ############
+  # Database #
+  ############
+  # Consistent for all SilverDB variants - internal OSOS ("ROM"), bitmaps, and strings.
   silverdb_header:
     seq:
       # Consistently 0x3.
       - id: version
         type: u4
-      # Possibly length related?
-      - id: what_is_this
+      # The length consumed by header content.
+      # Resource data begins immediately after all header values.
+      - id: header_length
         type: u4
       - id: section_count
         type: u4
@@ -42,11 +46,16 @@ types:
         type: u4
     instances:
       resource_entries:
-        type: resource_entry_metadata
+        # We need to inform resource entries of our section type
+        # in order to be able to parse accordingly.
+        type: resource_entry_metadata(section_magic)
         pos: section_offset
         repeat: expr
         repeat-expr: section_file_count
   resource_entry_metadata:
+    params:
+      - id: resource_type
+        type: u4
     seq:
       - id: file_id
         type: u4
@@ -54,3 +63,28 @@ types:
         type: u4
       - id: file_size
         type: u4
+    instances:
+      resource_data:
+        pos: _root.header.header_length + file_relative_offset
+        size: file_size
+        type:
+          switch-on: resource_type
+          # The constants below are big-endian values.
+          # They appear as little-endian within thie firmware.
+          cases:
+            # 'Str ' (BE) or ' rtS' (LE)
+            0x53747220: resource_str
+            _: resource_generic_data
+
+  ########################
+  # Resource definitions #
+  ########################
+  resource_str:
+    seq:
+      - id: string
+        type: strz
+        encoding: ascii
+  resource_generic_data:
+    seq:
+      - id: contents
+        size-eos: true

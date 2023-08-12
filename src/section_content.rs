@@ -1,31 +1,46 @@
-use serde::{Serialize, Serializer};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::{database::SilverError, section_types::SectionType};
 
 /// Content represented by sections within.
-#[derive(Serialize)]
+#[derive(Deserialize, Serialize)]
 #[serde(untagged)]
 pub enum SectionContent {
     // TODO(spotlightishere): Images should be parsed accordingly
-    #[serde(serialize_with = "serialize_bytes")]
+    #[serde(with = "RawData")]
     Bitmap(Vec<u8>),
 
-    #[serde(serialize_with = "serialize_bytes")]
+    #[serde(with = "RawData")]
     DateTimeLocale(Vec<u8>),
 
     String(String),
     StringTranslation(String),
 
     /// Not an actual section type - used to represent an unknown section's raw binary contents.
-    #[serde(serialize_with = "serialize_bytes")]
+    #[serde(with = "RawData")]
     Unknown(Vec<u8>),
 }
 
-fn serialize_bytes<S>(contents: &Vec<u8>, s: S) -> Result<S::Ok, S::Error>
-where
-    S: Serializer,
-{
-    s.serialize_str(hex::encode(contents).as_str())
+/// Generic, arbitrary data.
+struct RawData;
+impl RawData {
+    fn serialize<S>(contents: &Vec<u8>, s: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        s.serialize_str(hex::encode(contents).as_str())
+    }
+
+    fn deserialize<'de, D>(d: D) -> Result<Vec<u8>, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        use serde::de::Error;
+
+        let contents: &str = Deserialize::deserialize(d)?;
+        let raw_data = hex::decode(contents).map_err(Error::custom)?;
+        Ok(raw_data)
+    }
 }
 
 /// As many resources are C strings, they contain a null terminator.
@@ -48,7 +63,7 @@ impl SectionContent {
             SectionType::DateTimeLocale => SectionContent::DateTimeLocale(raw_data),
             SectionType::String => SectionContent::String(process_c_string(raw_data)?),
             SectionType::StringTranslation => {
-                SectionContent::StringTranslation(String::from_utf8(raw_data)?)
+                SectionContent::StringTranslation(process_c_string(raw_data)?)
             }
             _ => SectionContent::Unknown(raw_data),
         };

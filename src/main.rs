@@ -1,12 +1,15 @@
 use database::SilverDB;
+use marshal::serialize_contents;
 use std::{env, fs::File};
 
-use crate::sections::SectionContent;
-use crate::sections::SectionType;
+use crate::section_content::SectionContent;
+use crate::section_types::SectionType;
 
 mod database;
 mod format;
-mod sections;
+mod marshal;
+mod section_content;
+mod section_types;
 
 fn main() {
     // TODO: Implement proper flags eventually
@@ -23,15 +26,21 @@ fn main() {
 
     let operation = &arguments[1];
     let database_path = &arguments[2];
-    if operation != "info" {
-        unimplemented!()
-    }
 
     // Parse our file!
     let database_file = File::open(database_path).expect("unable to open SilverDB database");
     let database = SilverDB::read_file(database_file).expect("unable to parse SilverDB database");
 
-    println!("Found valid SilverDB database!");
+    if operation == "info" {
+        info(database);
+        return;
+    } else if operation != "extract" {
+        panic!("Invalid operation!")
+    }
+    serialize_contents(database).expect("failed to serialize");
+}
+
+fn info(database: SilverDB) {
     println!("There are {} sections.", database.sections.len());
     println!("Sections:");
     let sections = database.sections;
@@ -41,7 +50,7 @@ fn main() {
         println!("\tResource count: {}", section.resources.len());
         println!("\tResources:");
         for resource in &section.resources {
-            println!("\t\t- Resource ID: {:08x}", resource.id);
+            println!("\t\t- Resource ID: 0x{:08x}", resource.id);
         }
         println!("-------------------------------------------");
     }
@@ -54,7 +63,9 @@ fn main() {
         .expect("unable to find strings section");
     for string_resource in string_section.resources.as_slice() {
         match &string_resource.contents {
-            SectionContent::String(value) => println!("String resource: {}", value),
+            SectionContent::String(value) => {
+                println!("String resource (0x{:08x}): {}", &string_resource.id, value)
+            }
             _ => println!("Unknown content type!"),
         }
     }

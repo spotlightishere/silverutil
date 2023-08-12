@@ -22,6 +22,7 @@ pub struct SilverDBHeader {
     pub section_count: u32,
 }
 
+/// Simply a u32, but we read it as an array to ensure endianness.
 pub type SectionMagic = [u8; 4];
 
 #[binrw]

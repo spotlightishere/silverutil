@@ -1,4 +1,7 @@
 /target
 
+# For extracted output
+*.yaml
+
 # SilverDB files
 *.bin

@@ -1,11 +1,9 @@
+use serde::Serialize;
 use std::{fs::File, io, string::FromUtf8Error};
 
 use binrw::BinRead;
 
-use crate::{
-    format::SilverDBFormat,
-    sections::{SectionContent, SectionType},
-};
+use crate::{format::SilverDBFormat, section_content::SectionContent, section_types::SectionType};
 
 /// Possible errors encountered when parsing, or etc.
 #[derive(Debug)]
@@ -36,7 +34,6 @@ pub struct SilverDB {
 
 /// A high-level representation of section contents.
 pub struct SilverSection {
-    // TODO: This should be an enum switching on magic
     /// The magic identifying this section (i.e. 'Str ', 'BMap', 'LDTm', etc.)
     pub section_type: SectionType,
 
@@ -45,9 +42,11 @@ pub struct SilverSection {
 }
 
 /// A high-level representation of resources within a section.
+#[derive(Serialize)]
 pub struct SilverResource {
     /// An ID used to identify this resources. For example, 0x0dad06d8.
     pub id: u32,
+
     /// The content this resource holds.
     pub contents: SectionContent,
 }
@@ -74,7 +73,7 @@ impl SilverDB {
 
             for raw_resource in raw_section.resources {
                 // TODO(spotlightishere): Have section contents parsed accordingly
-                let contents = section_type.parse_section(raw_resource.contents)?;
+                let contents = SectionContent::parse_section(&section_type, raw_resource.contents)?;
 
                 resources.push(SilverResource {
                     id: raw_resource.id,

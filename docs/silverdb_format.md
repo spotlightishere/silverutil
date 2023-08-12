@@ -50,7 +50,7 @@ The names of sections are presented in big-endian for readability (i.e. `BMap` i
 | Name   | Magic        | Description |
 |--------|--------------|-------------|
 | `AALI` | `0x41414c49` |  |
-| `ACST` | `0x41435354` |  |
+| `ACST` | `0x41435354` | Possibly "animation controller string", as contents have names similar to `TPhotosAppCntlr`.  |
 | `AEVT` | `0x41455654` |  |
 | `ANIM` | `0x414e494d` |  |
 | `BMap` | `0x70614d42` | Bitmap imagery, commonly found in `SilverImagesDB.LE.bin`. |

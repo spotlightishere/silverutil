@@ -1,5 +1,5 @@
 use serde::Serialize;
-use std::{fs::File, io, string::FromUtf8Error};
+use std::{fmt, fs::File, io, string::FromUtf8Error};
 
 use binrw::BinRead;
 
@@ -41,11 +41,22 @@ pub struct SilverSection {
     pub resources: Vec<SilverResource>,
 }
 
+/// The ID identifying this resource.
+/// In general you should never modify the ID as it may be hardcoded in firmware.
+#[derive(Serialize)]
+pub struct SilverResourceID(u32);
+
+impl fmt::Display for SilverResourceID {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "0x{:08x}", self.0)
+    }
+}
+
 /// A high-level representation of resources within a section.
 #[derive(Serialize)]
 pub struct SilverResource {
     /// An ID used to identify this resources. For example, 0x0dad06d8.
-    pub id: u32,
+    pub id: SilverResourceID,
 
     /// The content this resource holds.
     pub contents: SectionContent,
@@ -76,7 +87,7 @@ impl SilverDB {
                 let contents = SectionContent::parse_section(&section_type, raw_resource.contents)?;
 
                 resources.push(SilverResource {
-                    id: raw_resource.id,
+                    id: SilverResourceID(raw_resource.id),
                     contents,
                 });
             }

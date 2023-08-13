@@ -62,7 +62,7 @@ fn print_info(database: SilverDB) {
         println!("\tResource count: {}", section.resources.len());
         println!("\tResources:");
         for resource in &section.resources {
-            println!("\t\t- Resource ID: 0x{:08x}", resource.id);
+            println!("\t\t- Resource ID: {}", resource.id);
         }
         println!("-------------------------------------------");
     }
@@ -76,7 +76,7 @@ fn print_info(database: SilverDB) {
     for string_resource in string_section.resources.as_slice() {
         match &string_resource.contents {
             SectionContent::String(value) => {
-                println!("String resource (0x{:08x}): {}", &string_resource.id, value)
+                println!("String resource ({}): {}", &string_resource.id, value)
             }
             _ => println!("Unknown content type!"),
         }

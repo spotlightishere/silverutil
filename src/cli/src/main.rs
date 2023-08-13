@@ -1,37 +1,58 @@
-use std::{env, fs::File};
+use clap::{Parser, Subcommand};
 
-use silverlib::{serialize_contents, SectionContent, SectionType, SilverDB};
+use std::{fs::File, path::PathBuf};
 
-fn main() {
-    // TODO: Implement proper flags eventually
-    // Possibly via clap?
-    let arguments: Vec<String> = env::args().collect();
-    if arguments.len() != 3 {
-        println!("Incorrect usage!");
-        println!(
-            "Usage: {} [info|extract] path/to/silverdb.bin",
-            arguments[0]
-        );
-        return;
-    }
+use silverlib::{SectionContent, SectionType, SilverDB};
 
-    let operation = &arguments[1];
-    let database_path = &arguments[2];
+mod marshal;
 
-    // Parse our file!
-    let database_file = File::open(database_path).expect("unable to open SilverDB database");
-    let database = SilverDB::read_file(database_file).expect("unable to parse SilverDB database");
-
-    if operation == "info" {
-        info(database);
-        return;
-    } else if operation != "extract" {
-        panic!("Invalid operation!")
-    }
-    serialize_contents(database).expect("failed to serialize");
+#[derive(Parser)]
+#[command(author, version, about, long_about = None)]
+struct Cli {
+    #[command(subcommand)]
+    command: Option<Subcommands>,
 }
 
-fn info(database: SilverDB) {
+#[derive(Subcommand)]
+enum Subcommands {
+    /// Extracts sections within binary into a YAML representation
+    Extract {
+        /// Path to Silver database to extract
+        database_path: PathBuf,
+        /// Directory to output YAML representation within
+        output_dir: PathBuf,
+    },
+    /// Displays information about contents present within sections
+    Info { database_path: PathBuf },
+}
+
+fn main() {
+    let cli = Cli::parse();
+    // We should not have optional subcommands.
+    let subcommand = cli.command.unwrap();
+
+    match subcommand {
+        Subcommands::Extract {
+            database_path,
+            output_dir,
+        } => {
+            let database = open_database(database_path);
+            marshal::serialize_contents(database, &output_dir).expect("failed to serialize");
+        }
+        Subcommands::Info { database_path } => {
+            let database = open_database(database_path);
+            print_info(database)
+        }
+    };
+}
+
+/// Parses the given path.
+fn open_database(database_path: PathBuf) -> SilverDB {
+    let database_file = File::open(database_path).expect("unable to open SilverDB database");
+    SilverDB::read_file(database_file).expect("unable to parse SilverDB database")
+}
+
+fn print_info(database: SilverDB) {
     println!("There are {} sections.", database.sections.len());
     println!("Sections:");
     let sections = database.sections;

@@ -5,3 +5,5 @@ edition = "2021"
 
 [dependencies]
 silverlib = { path = "../../" }
+clap = { version = "4.3", features = ["derive"] }
+serde_yaml = "0.9"

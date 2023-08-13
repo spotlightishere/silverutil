@@ -142,13 +142,20 @@ dependencies = [
 ]
 
 [[package]]
-name = "silverutil"
+name = "silverlib"
 version = "0.1.0"
 dependencies = [
  "binrw",
  "hex",
  "serde",
  "serde_yaml",
+]
+
+[[package]]
+name = "silverutil"
+version = "0.1.0"
+dependencies = [
+ "silverlib",
 ]
 
 [[package]]

@@ -1,15 +1,6 @@
-use database::SilverDB;
-use marshal::serialize_contents;
 use std::{env, fs::File};
 
-use crate::section_content::SectionContent;
-use crate::section_types::SectionType;
-
-mod database;
-mod format;
-mod marshal;
-mod section_content;
-mod section_types;
+use silverlib::{serialize_contents, SectionContent, SectionType, SilverDB};
 
 fn main() {
     // TODO: Implement proper flags eventually

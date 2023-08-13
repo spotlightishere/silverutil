@@ -1,5 +1,5 @@
 [package]
-name = "silverutil"
+name = "silverlib"
 version = "0.1.0"
 edition = "2021"
 
@@ -8,3 +8,8 @@ binrw = "0.11"
 hex = "0.4"
 serde = { version = "1.0", features = ["derive"] }
 serde_yaml = "0.9"
+
+[workspace]
+members = ["src/cli"]
+# When using `cargo run`, we'd prefer silverutil itself to be executed.
+default-members = ["src/cli"]

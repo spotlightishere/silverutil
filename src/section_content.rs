@@ -13,8 +13,8 @@ pub enum SectionContent {
     #[serde(with = "RawData")]
     DateTimeLocale(Vec<u8>),
 
+    /// A generic string type. Handled as a C string.
     String(String),
-    StringTranslation(String),
 
     /// Not an actual section type - used to represent an unknown section's raw binary contents.
     #[serde(with = "RawData")]
@@ -62,8 +62,12 @@ impl SectionContent {
             SectionType::Bitmap => SectionContent::Bitmap(raw_data),
             SectionType::DateTimeLocale => SectionContent::DateTimeLocale(raw_data),
             SectionType::String => SectionContent::String(process_c_string(raw_data)?),
-            SectionType::StringTranslation => {
-                SectionContent::StringTranslation(process_c_string(raw_data)?)
+            SectionType::StringTranslation => SectionContent::String(process_c_string(raw_data)?),
+            SectionType::AnimControllerString => {
+                SectionContent::String(process_c_string(raw_data)?)
+            }
+            SectionType::SilverControllerString => {
+                SectionContent::String(process_c_string(raw_data)?)
             }
             _ => SectionContent::Unknown(raw_data),
         };

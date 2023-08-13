@@ -66,7 +66,7 @@ The names of sections are presented in big-endian for readability (i.e. `BMap` i
 | `SANI` | `0x53414e49` |  |
 | `SCRN` | `0x5343524e` |  |
 | `SCRT` | `0x53435254` |  |
-| `SCST` | `0x53435354` |  |
+| `SCST` | `0x53435354` | Possibly "Silver/UI controller string", as contents match C++ class names (like `TTrainer_Cntlr_ConfirmationAlert`). |
 | `SEVT` | `0x53455654` |  |
 | `SLst` | `0x534c7374` |  |
 | `SORC` | `0x534f5243` |  |

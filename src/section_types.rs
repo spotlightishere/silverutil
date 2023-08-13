@@ -13,6 +13,10 @@ pub enum SectionType {
     StringTranslation,
     /// Strings used for date/time locale ('LDTm').
     DateTimeLocale,
+    /// Names of animation controller C++ classes as strings
+    AnimControllerString,
+    /// Names of UI controller C++ classes as strings
+    SilverControllerString,
 
     /// Not an actual section type - used to represent a currently unknown section's type.
     Unknown(SectionMagic),
@@ -31,7 +35,10 @@ impl SectionType {
             [0x6D, 0x54, 0x44, 0x4C] => SectionType::DateTimeLocale,
             // 'BMap' (BE) or 'paMB' (LE)
             [0x70, 0x61, 0x4D, 0x42] => SectionType::Bitmap,
-
+            // 'ACST' (BE) or 'TSCA' (LE)
+            [0x54, 0x53, 0x43, 0x41] => SectionType::AnimControllerString,
+            // 'SCST' (BE) or 'TSCS' (LE)
+            [0x54, 0x53, 0x43, 0x53] => SectionType::SilverControllerString,
             _ => SectionType::Unknown(magic),
         }
     }
@@ -49,6 +56,10 @@ impl SectionType {
             SectionType::DateTimeLocale => [0x6D, 0x54, 0x44, 0x4C],
             // 'BMap' (BE) or 'paMB' (LE)
             SectionType::Bitmap => [0x70, 0x61, 0x4D, 0x42],
+            // 'ACST' (BE) or 'TSCA' (LE)
+            SectionType::AnimControllerString => [0x54, 0x53, 0x43, 0x41],
+            // 'SCST' (BE) or 'TSCS' (LE)
+            SectionType::SilverControllerString => [0x54, 0x53, 0x43, 0x53],
 
             SectionType::Unknown(magic) => *magic,
         }
@@ -69,8 +80,10 @@ impl fmt::Display for SectionType {
         let temp_magic;
 
         let description = match self {
+            SectionType::AnimControllerString => "Animation Controller Strings",
             SectionType::Bitmap => "Bitmap",
             SectionType::DateTimeLocale => "Date/Time Locale",
+            SectionType::SilverControllerString => "Silver UI Controller Strings",
             SectionType::String => "Strings",
             SectionType::StringTranslation => "String View Placeholder",
 

@@ -4,7 +4,6 @@ use crate::{database::SilverError, section_types::SectionType};
 
 /// Content represented by sections within.
 #[derive(Deserialize, Serialize)]
-#[serde(untagged)]
 pub enum SectionContent {
     // TODO(spotlightishere): Images should be parsed accordingly
     #[serde(with = "RawData")]
@@ -37,7 +36,7 @@ impl RawData {
     {
         use serde::de::Error;
 
-        let contents: &str = Deserialize::deserialize(d)?;
+        let contents: String = Deserialize::deserialize(d)?;
         let raw_data = hex::decode(contents).map_err(Error::custom)?;
         Ok(raw_data)
     }

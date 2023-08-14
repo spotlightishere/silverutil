@@ -1,4 +1,5 @@
-use crate::format::SectionMagic;
+use crate::{format::SectionMagic, SilverError};
+use serde::{Deserialize, Serialize};
 use std::fmt;
 
 /// Possible known section types.
@@ -72,6 +73,41 @@ impl SectionType {
         let magic_value = u32::from_le_bytes(self.to_magic());
         let big_endian_value = magic_value.to_be_bytes().to_vec();
         String::from_utf8(big_endian_value).expect("invalid ASCII magic")
+    }
+
+    /// Obtains an enum value based on its four-byte string.
+    pub fn from_string(magic: String) -> Result<Self, SilverError> {
+        // Our strings are assumed to be big-endian, and four characters.
+        let string_bytes = magic.as_bytes().try_into()?;
+
+        // Reverse this big-endian format to be little-endian.
+        let raw_magic = u32::from_be_bytes(string_bytes).to_le_bytes();
+
+        Ok(Self::from_magic(raw_magic))
+    }
+}
+
+/// Simple deserializer to create the magic from its string form.
+impl<'de> Deserialize<'de> for SectionType {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        use serde::de::Error;
+
+        let magic: String = Deserialize::deserialize(deserializer)?;
+        let raw_magic = SectionType::from_string(magic).map_err(Error::custom)?;
+        Ok(raw_magic)
+    }
+}
+
+/// Simple serializer to convert the magic to its string form.
+impl Serialize for SectionType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(&self.to_string())
     }
 }
 

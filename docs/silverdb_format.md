@@ -30,7 +30,7 @@ All known firmware versions ensure a database version of `3`.
 |--------|------|-----------------------------------------|
 | 0x0    | u32  | [Section type](#section-types).         |
 | 0x4    | u32  | Amount of resource entries this section contains |
-| 0x8    | u32  | Unknown. Possibly related to flags.     |
+| 0x8    | u32  | Unknown. Observed values are either 0 or 1, implying a boolean of some sort. |
 | 0xc    | u32  | Offset to where this section's [resource metadata](#resource-metadata) array begins, relative to the file's start (0x0). |
 
 ### Resource Metadata

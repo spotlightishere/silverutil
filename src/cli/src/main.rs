@@ -15,7 +15,7 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Subcommands {
-    /// Extracts sections within binary into a YAML representation
+    /// Extracts sections within database into a YAML representation
     Extract {
         /// Path to Silver database to extract
         database_path: PathBuf,
@@ -24,6 +24,13 @@ enum Subcommands {
     },
     /// Displays information about contents present within sections
     Info { database_path: PathBuf },
+    /// Creates a database from a YAML representation
+    Create {
+        /// Directory YAML representation in within
+        input_dir: PathBuf,
+        /// Path to write Silver databases to
+        database_path: PathBuf,
+    },
 }
 
 fn main() {
@@ -37,11 +44,19 @@ fn main() {
             output_dir,
         } => {
             let database = open_database(database_path);
-            marshal::serialize_contents(database, &output_dir).expect("failed to serialize");
+            marshal::serialize_contents(database, &output_dir)
+                .expect("failed to serialize database to YAML representation");
         }
         Subcommands::Info { database_path } => {
             let database = open_database(database_path);
             print_info(database)
+        }
+        Subcommands::Create {
+            input_dir,
+            database_path,
+        } => {
+            let _ = marshal::deserialize_contents(&input_dir, &database_path)
+                .expect("failed to deserialize YAML representation");
         }
     };
 }

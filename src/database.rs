@@ -1,4 +1,5 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
+use std::array::TryFromSliceError;
 use std::{fmt, fs::File, io, string::FromUtf8Error};
 
 use binrw::BinRead;
@@ -11,6 +12,7 @@ pub enum SilverError {
     ContentParseFailure(FromUtf8Error),
     InvalidVersion,
     ParseError(binrw::Error),
+    InvalidMagic,
 }
 
 impl From<binrw::Error> for SilverError {
@@ -19,10 +21,28 @@ impl From<binrw::Error> for SilverError {
     }
 }
 
-// TODO(spotlightishere): This will not scale well as other content types are parsed.
+// Used for when parsing string contents.
 impl From<FromUtf8Error> for SilverError {
     fn from(value: FromUtf8Error) -> Self {
         SilverError::ContentParseFailure(value)
+    }
+}
+
+// Used for mismatches when reading magic.
+impl From<TryFromSliceError> for SilverError {
+    fn from(_: TryFromSliceError) -> Self {
+        SilverError::InvalidMagic
+    }
+}
+
+impl fmt::Display for SilverError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::ContentParseFailure(e) => write!(f, "Failed to parse section content: {e}"),
+            Self::InvalidMagic => write!(f, "Invalid magic detected!"),
+            Self::ParseError(e) => write!(f, "Failed to parse file format: {e}"),
+            Self::InvalidVersion => write!(f, "Invalid version of SilverDB file encountered!"),
+        }
     }
 }
 
@@ -37,13 +57,16 @@ pub struct SilverSection {
     /// The magic identifying this section (i.e. 'Str ', 'BMap', 'LDTm', etc.)
     pub section_type: SectionType,
 
+    /// Unknown flags for this section.
+    pub unknown_flags: u32,
+
     // Resources within this section.
     pub resources: Vec<SilverResource>,
 }
 
 /// The ID identifying this resource.
 /// In general you should never modify the ID as it may be hardcoded in firmware.
-#[derive(Serialize)]
+#[derive(Deserialize, Serialize)]
 pub struct SilverResourceID(u32);
 
 impl fmt::Display for SilverResourceID {
@@ -53,7 +76,7 @@ impl fmt::Display for SilverResourceID {
 }
 
 /// A high-level representation of resources within a section.
-#[derive(Serialize)]
+#[derive(Deserialize, Serialize)]
 pub struct SilverResource {
     /// An ID used to identify this resources. For example, 0x0dad06d8.
     pub id: SilverResourceID,
@@ -92,9 +115,9 @@ impl SilverDB {
                 });
             }
 
-            // TODO(spotlightishere): Have section type represented by enum
             sections.push(SilverSection {
                 section_type,
+                unknown_flags: raw_section.unknown_value,
                 resources,
             });
         }

@@ -2,11 +2,11 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
-use silverlib::{SilverDB, SilverResource};
+use silverlib::{SectionType, SilverDB, SilverResource};
 
 #[derive(Deserialize, Serialize)]
 pub struct SectionMetadata {
-    magic: String,
+    magic: SectionType,
     flags: u32,
     resources: Vec<SilverResource>,
 }
@@ -33,7 +33,7 @@ pub fn serialize_contents(database: SilverDB, output_dir: &Path) -> Result<(), A
         // We create a custom "SectionMetadata" type in order to
         // persist this section's magic and flags.
         let section_metadata = SectionMetadata {
-            magic: current_section.section_type.to_string(),
+            magic: current_section.section_type,
             flags: current_section.unknown_flags,
             resources: current_section.resources,
         };
@@ -71,7 +71,6 @@ pub fn deserialize_contents(input_dir: &Path, database_path: &Path) -> Result<Si
     for section_name in section_list {
         // For every metadata section, parse its respective YAML representation.
         let file_name = format!("{}.yaml", section_name);
-        println!("handling {file_name}");
         let section_path = input_dir.join(Path::new(&file_name));
         let section_contents: SectionMetadata = read_yaml(&section_path)?;
     }

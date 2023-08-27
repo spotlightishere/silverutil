@@ -38,8 +38,8 @@ types:
         type: u4
       - id: section_file_count
         type: u4
-      # Possibly flags?
-      - id: further_unknown
+      # Whether resource IDs jump around, or increase by one.
+      - id: is_sequential
         type: u4
       # Multiply by 4 to get the offset relative to the header.
       - id: section_offset

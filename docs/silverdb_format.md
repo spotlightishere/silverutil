@@ -1,5 +1,5 @@
 # SilverDB Format
-Every SilverDB database contains multiple types of resources, henceforth referenced as "sections". Every section contains multiple of a resource, referred to as "content". You identify content based on its ID - for example, `0x0dad06d8`.
+"Silver" is the codename of much of the iPod's UI framework. Every SilverDB database contains multiple types of resources, henceforth referenced as "sections". Every section contains multiple of a resource, referred to as "content". You identify content based on its ID - for example, `0x0dad06d8`.
 
 (This may or may not be the naming internally used, but it seems close enough.)
 
@@ -56,7 +56,7 @@ The names of sections are presented in big-endian for readability (i.e. `BMap` i
 | `BMap` | `0x70614d42` | Bitmap imagery, commonly found in `SilverImagesDB.LE.bin`. |
 | `CEVT` | `0x43455654` |  |
 | `CLov` | `0x434c6f76` |  |
-| `COLR` | `0x434f4c52` |  |
+| `COLR` | `0x434f4c52` | Defines colors used in UI elements. |
 | `CSov` | `0x43536f76` |  |
 | `EEEE` | `0x45454545` |  |
 | `FONT` | `0x464f4e54` |  |
@@ -80,8 +80,8 @@ The names of sections are presented in big-endian for readability (i.e. `BMap` i
 | `TLIP` | `0x544c4950` |  |
 | `TLOP` | `0x544c4f50` |  |
 | `TMLT` | `0x544d4c54` |  |
-| `TVCL` | `0x5456434c` |  |
-| `TVCS` | `0x54564353` |  |
+| `TVCL` | `0x5456434c` | Table view cell? |
+| `TVCS` | `0x54564353` | Table view cell "from Silver"? |
 | `TrIN` | `0x5472494e` |  |
 | `TrIO` | `0x5472494f` |  |
 | `TrOO` | `0x54724f4f` |  |
@@ -90,3 +90,5 @@ The names of sections are presented in big-endian for readability (i.e. `BMap` i
 | `VLyt` | `0x564c7974` |  |
 | `VSlt` | `0x56536c74` |  |
 | `View` | `0x56696577` |  |
+
+TODO: What's `StSt`, and how is it utilized? It's referenced in a few areas, yet seemingly not present.

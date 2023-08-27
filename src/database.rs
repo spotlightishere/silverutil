@@ -57,8 +57,9 @@ pub struct SilverSection {
     /// The magic identifying this section (i.e. 'Str ', 'BMap', 'LDTm', etc.)
     pub section_type: SectionType,
 
-    /// Unknown flags for this section.
-    pub unknown_flags: u32,
+    /// Whether this section's IDs are sequential and start at 1.
+    /// Necessary for certain resource types such as `StrT`.
+    pub is_sequential: u32,
 
     // Resources within this section.
     pub resources: Vec<SilverResource>,
@@ -115,9 +116,10 @@ impl SilverDB {
                 });
             }
 
+            let is_sequential = raw_section.is_sequential;
             sections.push(SilverSection {
                 section_type,
-                unknown_flags: raw_section.unknown_value,
+                is_sequential,
                 resources,
             });
         }

@@ -7,7 +7,7 @@ use silverlib::{SectionType, SilverDB, SilverResource};
 #[derive(Deserialize, Serialize)]
 pub struct SectionMetadata {
     magic: SectionType,
-    flags: u32,
+    is_sequential: u32,
     resources: Vec<SilverResource>,
 }
 
@@ -34,7 +34,7 @@ pub fn serialize_contents(database: SilverDB, output_dir: &Path) -> Result<(), A
         // persist this section's magic and flags.
         let section_metadata = SectionMetadata {
             magic: current_section.section_type,
-            flags: current_section.unknown_flags,
+            is_sequential: current_section.is_sequential,
             resources: current_section.resources,
         };
         let all_contents = serde_yaml::to_string(&section_metadata)?;
@@ -62,8 +62,6 @@ where
 }
 
 pub fn deserialize_contents(input_dir: &Path, database_path: &Path) -> Result<SilverDB, AnyError> {
-    // We'll be recreating
-
     // First, load section metadata.
     let metadata_path = input_dir.join(Path::new("metadata.yaml"));
     let section_list: Vec<String> = read_yaml(&metadata_path)?;

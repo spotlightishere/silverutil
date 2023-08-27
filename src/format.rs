@@ -34,8 +34,8 @@ pub struct SectionHeader {
     pub magic: SectionMagic,
     // The amount of resources contained within this section.
     pub resource_count: u32,
-    // Possibly flags for this section?
-    pub unknown_value: u32,
+    /// Whether this section's IDs are sequential and start at 1. Necessary for certain resource types such as `StrT`.
+    pub is_sequential: u32,
     // Offset to array of resource entries, relative to the start of the file (0x0).
     pub resource_offset: u32,
 

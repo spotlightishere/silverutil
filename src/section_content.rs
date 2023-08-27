@@ -1,6 +1,6 @@
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
-use crate::{database::SilverError, section_types::SectionType};
+use crate::{section_types::SectionType, silver_error::SilverError};
 
 /// Content represented by sections within.
 #[derive(Deserialize, Serialize)]

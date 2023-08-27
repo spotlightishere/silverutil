@@ -51,6 +51,16 @@ fn process_c_string(raw_data: Vec<u8>) -> Result<std::string::String, SilverErro
     Ok(contents)
 }
 
+/// Similarly to `process_c_string`, when we create C strings once more,
+/// they need to end with a null terminator. We simply tack one, where possible.
+fn create_c_string(raw_string: String) -> Vec<u8> {
+    // TODO(spotlightishere): Using the string's existing bytes doesn't quite work if
+    // we're presented a non-ASCII character. Can we, or should we, use a different approach?
+    let contents = raw_string.as_bytes();
+    let null_terminator: &[u8; 1] = &[0x00];
+    return [contents, null_terminator].concat();
+}
+
 impl SectionContent {
     /// Parses contents to a higher-level type accordingly based on their section.
     pub fn parse_section(
@@ -58,18 +68,31 @@ impl SectionContent {
         raw_data: Vec<u8>,
     ) -> Result<SectionContent, SilverError> {
         let section_content = match section_type {
+            // TODO(spotlightishere): Handle bitmap parsing
             SectionType::Bitmap => SectionContent::Bitmap(raw_data),
             SectionType::DateTimeLocale => SectionContent::DateTimeLocale(raw_data),
-            SectionType::String => SectionContent::String(process_c_string(raw_data)?),
-            SectionType::StringTranslation => SectionContent::String(process_c_string(raw_data)?),
-            SectionType::AnimControllerString => {
-                SectionContent::String(process_c_string(raw_data)?)
-            }
-            SectionType::SilverControllerString => {
+            // Several types are simply C strings.
+            SectionType::String
+            | SectionType::StringTranslation
+            | SectionType::AnimControllerString
+            | SectionType::SilverControllerString => {
                 SectionContent::String(process_c_string(raw_data)?)
             }
             _ => SectionContent::Unknown(raw_data),
         };
         Ok(section_content)
+    }
+
+    /// Reduces contents from their higher-level type to their raw binary representation.
+    pub fn reduce_section(section_content: SectionContent) -> Result<Vec<u8>, SilverError> {
+        let raw_data = match section_content {
+            // TODO(spotlightishere): Handle bitmap parsing
+            SectionContent::Bitmap(raw_contents) => raw_contents,
+            SectionContent::DateTimeLocale(raw_contents) => raw_contents,
+            SectionContent::Unknown(raw_contents) => raw_contents,
+            SectionContent::String(raw_string) => create_c_string(raw_string),
+        };
+
+        Ok(raw_data)
     }
 }

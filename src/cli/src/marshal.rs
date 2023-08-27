@@ -2,7 +2,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
-use silverlib::{SectionType, SilverDB, SilverResource};
+use silverlib::{SectionType, SilverDB, SilverResource, SilverSection};
 
 #[derive(Deserialize, Serialize)]
 pub struct SectionMetadata {
@@ -61,17 +61,29 @@ where
     Ok(unmarshalled)
 }
 
-pub fn deserialize_contents(input_dir: &Path, database_path: &Path) -> Result<SilverDB, AnyError> {
+pub fn deserialize_contents(input_dir: &Path, database_path: &Path) -> Result<(), AnyError> {
     // First, load section metadata.
     let metadata_path = input_dir.join(Path::new("metadata.yaml"));
     let section_list: Vec<String> = read_yaml(&metadata_path)?;
+
+    let mut all_sections: Vec<SilverSection> = Vec::new();
 
     for section_name in section_list {
         // For every metadata section, parse its respective YAML representation.
         let file_name = format!("{}.yaml", section_name);
         let section_path = input_dir.join(Path::new(&file_name));
         let section_contents: SectionMetadata = read_yaml(&section_path)?;
+
+        let current_section = SilverSection {
+            section_type: section_contents.magic,
+            is_sequential: section_contents.is_sequential,
+            resources: section_contents.resources,
+        };
+        all_sections.push(current_section);
     }
 
-    todo!()
+    // Finally, write our raw database.
+    let raw_database = SilverDB::write(all_sections)?;
+    fs::write(&database_path, raw_database)?;
+    Ok(())
 }

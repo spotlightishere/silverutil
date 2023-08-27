@@ -4,10 +4,12 @@ use std::{fmt, fs::File, io};
 use binrw::BinRead;
 
 use crate::{
-    format::SilverDBFormat, section_content::SectionContent, section_types::SectionType,
+    format::SilverDBFormat,
+    format::{ResourceMetadata, SectionHeader, SilverDBHeader},
+    section_content::SectionContent,
+    section_types::SectionType,
     silver_error::SilverError,
 };
-
 
 /// A high-level representation of a SilverDB file.
 pub struct SilverDB {
@@ -88,5 +90,55 @@ impl SilverDB {
         }
 
         Ok(SilverDB { sections })
+    }
+
+    pub fn write(all_sections: Vec<SilverSection>) -> Result<Vec<u8>, SilverError> {
+        // First, we need to reduce the high-level representations to their binary formats.
+        let mut raw_sections: Vec<SectionHeader> = Vec::new();
+
+        for current_section in all_sections {
+            // We need to synthesize resource metadata for all resouces within this section.
+            let mut all_resources: Vec<ResourceMetadata> = Vec::new();
+            for current_resource in current_section.resources {
+                // We reduce this section back to its raw, Vec<u8> form.
+                let raw_resource = SectionContent::reduce_section(current_resource.contents)?;
+
+                let resource = ResourceMetadata {
+                    id: current_resource.id.0,
+                    // This will be filled in by binrw when writing.
+                    data_offset: 0,
+                    data_size: raw_resource.len() as u32,
+                    contents: raw_resource,
+                };
+                all_resources.push(resource);
+            }
+
+            // Lastly, we synthesize section header information.
+            let raw_section = SectionHeader {
+                magic: current_section.section_type.to_magic(),
+                // TODO(spotlightishere): Should binrw calculate this for us?
+                // It's simple enough to figure out manually, thankfully.
+                resource_count: all_resources.len() as u32,
+                is_sequential: current_section.is_sequential,
+                // This will be filled in by binrw when writing.
+                resource_offset: 0,
+                resources: all_resources,
+            };
+            raw_sections.push(raw_section);
+        }
+
+        // Next, we create a mock SilverDB struct. This is simply to give our resources.
+        let mock_database = SilverDBFormat {
+            header: SilverDBHeader {
+                // 0x03 across 5th, 6th, and 7th generation iPod nanos.
+                version: 3,
+                // This will be filled in by binrw when writing.
+                header_length: 0,
+                section_count: raw_sections.len() as u32,
+            },
+            sections: raw_sections,
+        };
+
+        todo!();
     }
 }

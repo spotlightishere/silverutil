@@ -55,7 +55,7 @@ fn main() {
             input_dir,
             database_path,
         } => {
-            let _ = marshal::deserialize_contents(&input_dir, &database_path)
+            marshal::deserialize_contents(&input_dir, &database_path)
                 .expect("failed to deserialize YAML representation");
         }
     };

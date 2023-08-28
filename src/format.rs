@@ -65,8 +65,10 @@ impl LittleHelper {
 
     /// Writes padding to align this to 4 bytes.
     fn write_padding(&mut self, length: u32) -> Result<(), io::Error> {
-        let padding_length = 4 - (length % 4);
-        if padding_length == 4 {
+        let alignment = 4;
+        let padding_length: u32 = alignment - (length % alignment);
+        if padding_length == alignment {
+            // No padding is necessary.
             return Ok(());
         }
 
@@ -242,10 +244,18 @@ impl SilverDBFormat {
             // We must adjust it to be past the format header + section headers (`resource_metadata_offset`).
             header_writer.write_u32_le(resource_metadata_offset + current_resource_meta_offset)?;
 
-            // For an unknown reason, we must also pad the raw data for every section.
-            // TODO(spotlightishere): It appears some sections require more than 4 bytes of alignment. Why?
+            // We must also pad the all raw data for every section.
             let current_raw_data_offset = raw_data_writer.pos_as_u32();
             raw_data_writer.write_padding(current_raw_data_offset)?;
+
+            // TODO(spotlightishere): It appears some sections require more than 4 bytes of alignment. Why?
+            // As observed by the internal "SRVL" section in firmware 1.0.2 of the iPod nano 5th generation,
+            // it has an extra four bytes of padding.
+            //
+            // We'll manually handle this.
+            if current_section.magic == [0x4C, 0x56, 0x52, 0x53] {
+                raw_data_writer.write_u32_le(0)?;
+            }
         }
 
         // Before finalizing, we need to update the header to account for proper header length.

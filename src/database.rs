@@ -1,7 +1,5 @@
 use serde::{Deserialize, Serialize};
-use std::{fmt, fs::File, io};
-
-use binrw::BinRead;
+use std::{fmt, io::Cursor};
 
 use crate::{
     format::SilverDBFormat,
@@ -52,13 +50,10 @@ pub struct SilverResource {
 }
 
 impl SilverDB {
-    pub fn read_file(file: File) -> Result<Self, SilverError> {
-        return SilverDB::read(file);
-    }
-
-    pub fn read<T: io::Read + io::Seek>(mut reader: T) -> Result<Self, SilverError> {
+    pub fn read(file_contents: Vec<u8>) -> Result<Self, SilverError> {
         // First, parse the actual file via binrw.
-        let database_file = SilverDBFormat::read(&mut reader)?;
+        let reader = Cursor::new(file_contents);
+        let database_file = SilverDBFormat::read(reader)?;
 
         // Sanity check:
         if database_file.header.version != 3 {

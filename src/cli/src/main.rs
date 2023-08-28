@@ -1,6 +1,6 @@
 use clap::{Parser, Subcommand};
 
-use std::{fs::File, path::PathBuf};
+use std::{fs::File, io::Read, path::PathBuf};
 
 use silverlib::{SectionContent, SectionType, SilverDB};
 
@@ -63,8 +63,13 @@ fn main() {
 
 /// Parses the given path.
 fn open_database(database_path: PathBuf) -> SilverDB {
-    let database_file = File::open(database_path).expect("unable to open SilverDB database");
-    SilverDB::read_file(database_file).expect("unable to parse SilverDB database")
+    let mut database_file = File::open(database_path).expect("unable to open SilverDB database");
+    let mut file_contents: Vec<u8> = Vec::new();
+    database_file
+        .read_to_end(&mut file_contents)
+        .expect("unable to read contents of SilverDB database");
+
+    SilverDB::read(file_contents).expect("unable to parse SilverDB database")
 }
 
 fn print_info(database: SilverDB) {

@@ -1,6 +1,7 @@
 use serde::ser::StdError;
 use std::array::TryFromSliceError;
 use std::fmt;
+use std::io;
 use std::string::FromUtf8Error;
 
 /// Possible errors encountered when parsing, or etc.
@@ -8,12 +9,12 @@ use std::string::FromUtf8Error;
 pub enum SilverError {
     ContentParseFailure(FromUtf8Error),
     InvalidVersion,
-    ParseError(binrw::Error),
+    ParseError(io::Error),
     InvalidMagic,
 }
 
-impl From<binrw::Error> for SilverError {
-    fn from(value: binrw::Error) -> Self {
+impl From<io::Error> for SilverError {
+    fn from(value: io::Error) -> Self {
         SilverError::ParseError(value)
     }
 }

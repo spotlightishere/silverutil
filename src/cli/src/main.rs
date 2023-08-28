@@ -10,7 +10,7 @@ mod marshal;
 #[command(author, version, about, long_about = None)]
 struct Cli {
     #[command(subcommand)]
-    command: Option<Subcommands>,
+    command: Subcommands,
 }
 
 #[derive(Subcommand)]
@@ -35,10 +35,7 @@ enum Subcommands {
 
 fn main() {
     let cli = Cli::parse();
-    // We should not have optional subcommands.
-    let subcommand = cli.command.unwrap();
-
-    match subcommand {
+    match cli.command {
         Subcommands::Extract {
             database_path,
             output_dir,

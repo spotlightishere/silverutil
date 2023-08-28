@@ -134,6 +134,7 @@ impl SilverDB {
             sections: raw_sections,
         };
 
-        todo!();
+        let raw_contents = mock_database.write()?;
+        Ok(raw_contents)
     }
 }

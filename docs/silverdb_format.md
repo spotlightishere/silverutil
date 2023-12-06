@@ -1,7 +1,7 @@
 # SilverDB Format
 "Silver" is the codename of much of the iPod's UI framework. Every SilverDB database contains multiple types of resources, henceforth referenced as "sections". Every section contains multiple of a resource, referred to as "content". You identify content based on its ID - for example, `0x0dad06d8`.
 
-(This may or may not be the naming internally used, but it seems close enough.)
+(This may or may not be the correct terminology used, but it seems close enough.)
 
 
 ## File Format
@@ -14,7 +14,7 @@ Although sections define an offset to resource metadata, resource metadata is im
 | 0x0    | [Database Header](#database-header)  | Defines section count. |
 | 0xc    | [Section Metadata](#section-metadata) | Repeats for as many sections as defined. |
 | ...    | [Resource metadata](#resource-metadata) | Repeats for as many resource entries defined in sections. |
-| ...    | Resource contents  | All data offsets base off of this. |
+| ...    | Resource contents  | All data offsets are relative to this. |
 
 ### Database Header
 All known firmware versions ensure a database version of `3`.
@@ -26,11 +26,11 @@ All known firmware versions ensure a database version of `3`.
 | 0x8    | u32  | Section count |
 
 ### Section Metadata
-| Offset | Type | Description                             |
-|--------|------|-----------------------------------------|
-| 0x0    | u32  | [Section type](#section-types).         |
-| 0x4    | u32  | Amount of resource entries this section contains |
-| 0x8    | u32  | Unknown. Observed values are either 0 or 1, implying a boolean of some sort. |
+| Offset | Type | Description                                           |
+|--------|------|-------------------------------------------------------|
+| 0x0    | u32  | [Section type](#section-types).                       |
+| 0x4    | u32  | Amount of resource entries this section contains      |
+| 0x8    | u32  | Whether resource IDs jump around, or increase by one. |
 | 0xc    | u32  | Offset to where this section's [resource metadata](#resource-metadata) array begins, relative to the file's start (0x0). |
 
 ### Resource Metadata
@@ -42,7 +42,9 @@ All known firmware versions ensure a database version of `3`.
 
 ## Section types
 This section should not be considered exhaustive, as its information is largely focused on the 5th generation iPod nano.
-Some descriptions may be wrong - please feel free to submit a pull request and expand/elaborate!
+Some descriptions may be wrong - please feel free to create a pull request and expand or elaborate on section types!
+
+Some section types have contents which represent an array of elements within. In these situations, the first two bytes (a `uint16_t`) represent the amount of elements within.
 
 Natively, section types are stored in little-endian format.
 The names of sections are presented in big-endian for readability (i.e. `BMap` is `paMB` in firmware).

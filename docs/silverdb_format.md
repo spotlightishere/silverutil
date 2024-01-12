@@ -59,12 +59,18 @@ The names of sections are presented in big-endian for readability (i.e. `BMap` i
 | `CEVT` | `0x43455654` |  |
 | `CLov` | `0x434c6f76` |  |
 | `COLR` | `0x434f4c52` | Defines colors used in UI elements. |
+| `CLKH` | `0x434c4b48` | Seen within an iPod nano 7G's internal ROM. |
 | `CSov` | `0x43536f76` |  |
+| `CWBM` | `0x4357424d` | Seen within an iPod nano 7G's internal ROM. |
+| `DECO` | `0x4445434f` | Seen within an iPod nano 7G's internal ROM. |
 | `EEEE` | `0x45454545` |  |
 | `FONT` | `0x464f4e54` |  |
 | `ITEM` | `0x4954454d` |  |
 | `LDTm` | `0x4c44546d` | Referenced as `TLocaleDateTimeResource` within firmware. |
 | `MASt` | `0x4d415374` |  |
+| `PVCD` | `0x50564344` | Seen within an iPod nano 7G's internal ROM. |
+| `PVCL` | `0x5056434c` | Seen within an iPod nano 7G's internal ROM. |
+| `PVCR` | `0x50564352` | Seen within an iPod nano 7G's internal ROM. |
 | `SANI` | `0x53414e49` |  |
 | `SCRN` | `0x5343524e` |  |
 | `SCRT` | `0x53435254` |  |
@@ -75,6 +81,7 @@ The names of sections are presented in big-endian for readability (i.e. `BMap` i
 | `SRVL` | `0x5352564c` |  |
 | `SStr` | `0x53537472` |  |
 | `SUse` | `0x53557365` |  |
+| `StBM` | `0x5374424d` | Seen within an iPod nano 7G's internal ROM. Perhaps bitmap images? |
 | `Str ` | `0x53747220` | Strings used within various UI components. Translations can be found within `SilverDB.xx_XX.LE.bin`. |
 | `StrT` | `0x53747254` | Base descriptions of view text (i.e. `PhotosSettingsSlideshowMusic_Screen_Nested_Default` or `PhotosGL_Camera_Delete_All_Confirmation_Alt`) |
 | `T10N` | `0x5431304e` |  |
@@ -82,6 +89,7 @@ The names of sections are presented in big-endian for readability (i.e. `BMap` i
 | `TLIP` | `0x544c4950` |  |
 | `TLOP` | `0x544c4f50` |  |
 | `TMLT` | `0x544d4c54` |  |
+| `TMap` | `0x544d6170` | Seen within an iPod nano 7G's internal ROM. |
 | `TVCL` | `0x5456434c` | Table view cell? |
 | `TVCS` | `0x54564353` | Table view cell "from Silver"? |
 | `TrIN` | `0x5472494e` |  |

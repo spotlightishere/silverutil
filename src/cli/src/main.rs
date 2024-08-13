@@ -88,8 +88,12 @@ fn print_info(database: SilverDB) {
     let string_section = sections
         .as_slice()
         .iter()
-        .find(|&section| section.section_type == SectionType::String)
-        .expect("unable to find strings section");
+        .find(|&section| section.section_type == SectionType::String);
+    let Some(string_section) = string_section else {
+        println!("No string section found in this database.");
+        return;
+    };
+
     for string_resource in string_section.resources.as_slice() {
         match &string_resource.contents {
             SectionContent::String(value) => {

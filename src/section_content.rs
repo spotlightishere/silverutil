@@ -58,7 +58,7 @@ fn create_c_string(raw_string: String) -> Vec<u8> {
     // we're presented a non-ASCII character. Can we, or should we, use a different approach?
     let contents = raw_string.as_bytes();
     let null_terminator: &[u8; 1] = &[0x00];
-    return [contents, null_terminator].concat();
+    [contents, null_terminator].concat()
 }
 
 impl SectionContent {

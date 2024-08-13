@@ -84,6 +84,6 @@ pub fn deserialize_contents(input_dir: &Path, database_path: &Path) -> Result<()
 
     // Finally, write our raw database.
     let raw_database = SilverDB::write(all_sections)?;
-    fs::write(&database_path, raw_database)?;
+    fs::write(database_path, raw_database)?;
     Ok(())
 }

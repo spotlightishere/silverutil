@@ -54,7 +54,7 @@ impl LittleHelper {
     }
 
     /// Writes an arbitrary length of bytes.
-    fn write_length(&mut self, raw_data: &Vec<u8>) -> Result<(), io::Error> {
+    fn write_length(&mut self, raw_data: &[u8]) -> Result<(), io::Error> {
         self.0.write_all(raw_data)
     }
 

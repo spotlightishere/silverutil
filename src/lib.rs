@@ -1,5 +1,6 @@
 mod database;
 mod format;
+mod little_helper;
 mod section_content;
 mod section_types;
 mod silver_error;

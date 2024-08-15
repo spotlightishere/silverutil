@@ -7,25 +7,27 @@ use crate::{little_helper::LittleHelper, SilverError};
 
 /// Possible representations of bitmap data.
 #[derive(Serialize_repr, Deserialize_repr, PartialEq, Debug)]
-#[repr(u8)]
+#[repr(u16)]
 pub enum RawBitmapType {
-    DepthFour = 0x04,
-    DepthEight = 0x08,
-    NoClue = 0x64,
-    Rgb565 = 0x65,
-    EightyEight = 0x88,
+    GrayscaleFour = 0x0004,
+    GrayscaleEight = 0x0008,
+    Rgb565 = 0x0565,
+    Argb8888 = 0x1888,
+    RgbEight = 0x0064,
+    RgbSixteen = 0x0065,
 }
 
-impl TryFrom<u8> for RawBitmapType {
+impl TryFrom<u16> for RawBitmapType {
     type Error = SilverError;
 
-    fn try_from(v: u8) -> Result<Self, Self::Error> {
+    fn try_from(v: u16) -> Result<Self, Self::Error> {
         match v {
-            x if x == RawBitmapType::DepthFour as u8 => Ok(RawBitmapType::DepthFour),
-            x if x == RawBitmapType::DepthEight as u8 => Ok(RawBitmapType::DepthEight),
-            x if x == RawBitmapType::NoClue as u8 => Ok(RawBitmapType::NoClue),
-            x if x == RawBitmapType::Rgb565 as u8 => Ok(RawBitmapType::Rgb565),
-            x if x == RawBitmapType::EightyEight as u8 => Ok(RawBitmapType::EightyEight),
+            x if x == RawBitmapType::GrayscaleFour as u16 => Ok(RawBitmapType::GrayscaleFour),
+            x if x == RawBitmapType::GrayscaleEight as u16 => Ok(RawBitmapType::GrayscaleEight),
+            x if x == RawBitmapType::Rgb565 as u16 => Ok(RawBitmapType::Rgb565),
+            x if x == RawBitmapType::Argb8888 as u16 => Ok(RawBitmapType::Argb8888),
+            x if x == RawBitmapType::RgbEight as u16 => Ok(RawBitmapType::RgbEight),
+            x if x == RawBitmapType::RgbSixteen as u16 => Ok(RawBitmapType::RgbSixteen),
             _ => Err(SilverError::InvalidBitmap),
         }
     }
@@ -36,15 +38,14 @@ impl TryFrom<u8> for RawBitmapType {
 pub struct RawBitmapData {
     /// The type of this bitmap image.
     pub image_type: RawBitmapType,
-    /// Possibly the interpretation.
-    // TODO(spotlightishere): Determine.
-    pub image_mode: u8,
-    /// Possibly the depth of this image.
-    pub maybe_depth: u16,
-    /// Unknown. Often 16.
-    pub unknown_value: u16,
-    /// Unknown. Often zero.
-    pub unknown_again: u16,
+    /// This field's exact usage is unknown: it was observed to be one
+    /// within external SilverImages, and zero within internal bitmaps.
+    // TODO(spotlightishere): Determine exact usage
+    pub is_external: u16,
+    /// The width this bitmap image will be rendered at.
+    pub rendered_width: u16,
+    /// Possibly flags associated with this image.
+    pub flags: u16,
     pub padding_one: u32,
     pub padding_two: u32,
     pub width: u32,
@@ -63,11 +64,10 @@ impl RawBitmapData {
         let mut helper = LittleHelper(cursor);
 
         let mut representation = RawBitmapData {
-            image_type: helper.read_u8()?.try_into()?,
-            image_mode: helper.read_u8()?,
-            maybe_depth: helper.read_u16_le()?,
-            unknown_again: helper.read_u16_le()?,
-            unknown_value: helper.read_u16_le()?,
+            image_type: helper.read_u16_le()?.try_into()?,
+            is_external: helper.read_u16_le()?,
+            rendered_width: helper.read_u16_le()?,
+            flags: helper.read_u16_le()?,
             padding_one: helper.read_u32_le()?,
             padding_two: helper.read_u32_le()?,
             width: helper.read_u32_le()?,

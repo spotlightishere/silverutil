@@ -69,7 +69,9 @@ impl SectionContent {
         raw_data: Vec<u8>,
     ) -> Result<SectionContent, SilverError> {
         let section_content = match section_type {
-            SectionType::Bitmap => SectionContent::Bitmap(BitmapImage::parse(raw_data)?),
+            SectionType::Bitmap | SectionType::SilverBitmap => {
+                SectionContent::Bitmap(BitmapImage::parse(raw_data)?)
+            }
             SectionType::DateTimeLocale => SectionContent::DateTimeLocale(raw_data),
             // Several types are simply C strings.
             SectionType::String

@@ -28,7 +28,6 @@ pub struct BitmapImageMetadata {
     pub width: u32,
     pub height: u32,
     pub format_type: RawBitmapType,
-    pub mode: u8,
     pub resource_id: u32,
     pub path: String,
 }
@@ -55,7 +54,7 @@ pub fn serialize_contents(database: SilverDB, output_dir: &Path) -> Result<(), A
         // type in order to persist this section's magic and flags.
         // However, we must handle bitmap images separately.
         match current_section.section_type {
-            SectionType::Bitmap => {
+            SectionType::Bitmap | SectionType::SilverBitmap => {
                 // Keep track of written bitmap image entries.
                 let mut bitmap_list = Vec::new();
 
@@ -80,7 +79,6 @@ pub fn serialize_contents(database: SilverDB, output_dir: &Path) -> Result<(), A
                             height: 0,
                             // This is not actually the format type, as it has none.
                             format_type: RawBitmapType::Rgb565,
-                            mode: 0,
                             resource_id,
                             path: "empty".to_string(),
                         };
@@ -97,7 +95,6 @@ pub fn serialize_contents(database: SilverDB, output_dir: &Path) -> Result<(), A
                         width: entry_contents.width,
                         height: entry_contents.height,
                         format_type: entry_contents.format_type,
-                        mode: entry_contents.mode,
                         resource_id: entry_contents.resource_id,
                         path: output_relative,
                     };
@@ -159,7 +156,9 @@ pub fn deserialize_contents(input_dir: &Path, database_path: &Path) -> Result<()
         let section_contents: SectionMetadata = read_yaml(&section_path)?;
 
         // TODO(spotlightishere): Implement
-        if section_contents.magic == SectionType::Bitmap {
+        if section_contents.magic == SectionType::Bitmap
+            || section_contents.magic == SectionType::SilverBitmap
+        {
             todo!("deserialization of bitmap contents is not currently implemented");
         }
 

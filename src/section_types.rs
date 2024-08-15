@@ -7,6 +7,9 @@ use std::fmt;
 pub enum SectionType {
     /// Represents bitmap images within a section ('BMap').
     Bitmap,
+    /// Represents hardcoded bitmap images for unknown usage ('StBM').
+    // TODO(spotlightishere): This name is most certainly incorrect.
+    SilverBitmap,
     /// Represents UI strings ('Str ').
     String,
     /// Represents placeholders for view strings. ('StrT')
@@ -14,9 +17,9 @@ pub enum SectionType {
     StringTranslation,
     /// Strings used for date/time locale ('LDTm').
     DateTimeLocale,
-    /// Names of animation controller C++ classes as strings
+    /// Names of animation controller C++ classes as strings.
     AnimControllerString,
-    /// Names of UI controller C++ classes as strings
+    /// Names of UI controller C++ classes as strings.
     SilverControllerString,
 
     /// Not an actual section type - used to represent a currently unknown section's type.
@@ -36,6 +39,8 @@ impl SectionType {
             [0x6D, 0x54, 0x44, 0x4C] => SectionType::DateTimeLocale,
             // 'BMap' (BE) or 'paMB' (LE)
             [0x70, 0x61, 0x4D, 0x42] => SectionType::Bitmap,
+            // 'StBM' (BE) or 'MBtS' (LE)
+            [0x4D, 0x42, 0x74, 0x53] => SectionType::SilverBitmap,
             // 'ACST' (BE) or 'TSCA' (LE)
             [0x54, 0x53, 0x43, 0x41] => SectionType::AnimControllerString,
             // 'SCST' (BE) or 'TSCS' (LE)
@@ -57,11 +62,12 @@ impl SectionType {
             SectionType::DateTimeLocale => [0x6D, 0x54, 0x44, 0x4C],
             // 'BMap' (BE) or 'paMB' (LE)
             SectionType::Bitmap => [0x70, 0x61, 0x4D, 0x42],
+            // 'StBM' (BE) or 'MBtS' (LE)
+            SectionType::SilverBitmap => [0x4D, 0x42, 0x74, 0x53],
             // 'ACST' (BE) or 'TSCA' (LE)
             SectionType::AnimControllerString => [0x54, 0x53, 0x43, 0x41],
             // 'SCST' (BE) or 'TSCS' (LE)
             SectionType::SilverControllerString => [0x54, 0x53, 0x43, 0x53],
-
             SectionType::Unknown(magic) => *magic,
         }
     }
@@ -118,6 +124,7 @@ impl fmt::Display for SectionType {
         let description = match self {
             SectionType::AnimControllerString => "Animation Controller Strings",
             SectionType::Bitmap => "Bitmap",
+            SectionType::SilverBitmap => "Silver Bitmap",
             SectionType::DateTimeLocale => "Date/Time Locale",
             SectionType::SilverControllerString => "Silver UI Controller Strings",
             SectionType::String => "Strings",

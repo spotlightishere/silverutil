@@ -20,8 +20,6 @@ pub struct BitmapImage {
     pub height: u32,
     /// The format this bitmap image is encoded in.
     pub format_type: RawBitmapType,
-    /// The mode our bitmap data is encoded in.
-    pub mode: u8,
     /// The resource ID this bitmap data is associated with.
     pub resource_id: u32,
     /// A PNG-encoded version of our bitmap image.
@@ -40,14 +38,12 @@ impl BitmapImage {
         let resource_id = raw_format.resource_id;
 
         // TODO(spotlightishere): Remove
-        println!("=== Information ===");
-        println!("\tResource ID: {}", resource_id);
-        println!("\tResource Type: {:?}", raw_format.image_type);
-        println!("\tResource Mode: {:?}", raw_format.image_mode);
-        println!("\tWidth: {}", raw_format.width);
-        println!("\tHeight: {}", raw_format.height);
-        println!("\tClaimed size: {}", raw_format.contents_length);
-        println!("\tBuffer size: {}", raw_format.contents.len());
+        println!("{} is {:?}", resource_id, raw_format.image_type);
+        println!("\tFlags: {:?}", raw_format.flags);
+        println!(
+            "\tDimensions: {}x{} (rendered at {})",
+            raw_format.width, raw_format.height, raw_format.rendered_width
+        );
 
         // Additionally, some bitmap images have dimensions, but lack any substance.
         // TODO(spotlightishere): Is this correct?
@@ -63,105 +59,103 @@ impl BitmapImage {
         // Now, convert our bitmap data to a PNG representation.
         let mut png_writer = Cursor::new(Vec::new());
         match raw_format.image_type {
-            RawBitmapType::Rgb565 => {
-                // Try and chip off what's presumably the palette.
-                // TODO(spotlightishere): We likely should use this palette.
-                let mut trimmed_contents = raw_format.contents.clone();
-                let expected_size = if raw_format.image_mode == 0 {
-                    raw_format.height * raw_format.width
-                } else {
-                    raw_format.height * raw_format.width * 2
-                };
-
-                if raw_format.contents_length > expected_size {
-                    // We'll assume this palette is 4 bytes (or something).
-                    // TODO(spotlightishere): Determine if this assumption can always be made
-                    let palette_length = u32::from_le_bytes([
-                        trimmed_contents[0],
-                        trimmed_contents[1],
-                        trimmed_contents[2],
-                        trimmed_contents[3],
-                    ]);
-                    let removal_length = 4 + (palette_length * 4);
-                    trimmed_contents.drain(0..removal_length as usize);
-                }
-
-                // TODO(spotlightishere): This is VERY wrong
-                // Is this ARGB1555?
-                if raw_format.image_mode == 0 {
-                    let rgb_contents: Vec<u8> = trimmed_contents
-                        .chunks_exact(2)
-                        // Batch every pair of u8 as a u16.
-                        .map(|pair| u16::from_le_bytes([pair[0], pair[1]]))
-                        // Then, convert our u16 of RGB565 into three u8 of RGB.
-                        .flat_map(|pixel| {
-                            // TODO(spotlightishere): This alpha channel isn't correct.
-                            // let a = ((pixel >> 12 & 0b1111) * (255 / 0b1111)) as u8;
-                            let a = 0xFF;
-                            let r = ((pixel >> 11 & 0b11111) * (255 / 0b11111)) as u8;
-                            let g = ((pixel >> 6 & 0b11111) * (255 / 0b11111)) as u8;
-                            let b = ((pixel >> 1 & 0b11111) * (255 / 0b11111)) as u8;
-
-                            [r, g, b, a]
-                        })
-                        .collect();
-
-                    let rgb_image = RgbaImage::from_raw(
-                        raw_format.width,
-                        raw_format.height,
-                        rgb_contents.clone(),
-                    )
-                    .expect("should be able to create an RGBA image");
-
-                    rgb_image.write_to(&mut png_writer, image::ImageFormat::Png)?;
-                } else {
-                    let rgb_contents: Vec<u8> = trimmed_contents
-                        .chunks_exact(2)
-                        .map(|pair| u16::from_le_bytes([pair[0], pair[1]]))
-                        .flat_map(|pixel| {
-                            let r = ((pixel >> 11 & 0b11111) * (255 / 0b11111)) as u8;
-                            let g = ((pixel >> 5 & 0b111111) * (255 / 0b111111)) as u8;
-                            let b = ((pixel & 0b11111) * (255 / 0b11111)) as u8;
-
-                            [r, g, b]
-                        })
-                        .collect();
-
-                    let rgb_image = RgbImage::from_raw(
-                        raw_format.width,
-                        raw_format.height,
-                        rgb_contents.clone(),
-                    )
-                    .expect("should be able to create an RGB image");
-
-                    rgb_image.write_to(&mut png_writer, image::ImageFormat::Png)?;
-                }
-            }
-            // TODO(spotlightishere): This may be 16-bit RGB?
-            // RawBitmapType::EightyEight => {
-            //     let raw_contents: Vec<u16> = raw_format.contents
-            //         .chunks_exact(2)
-            //         .into_iter()
-            //         .map(|x| u16::from_le_bytes([x[0], x[1]]))
-            //         .collect();
-
-            //     let gray_image = GrayAlpha16Image::from_raw(
-            //         raw_format.width,
-            //         raw_format.height,
-            //         raw_contents
-            //     )
-            //     .expect("should be able to create grayscale alpha image");
-            // }
-            // TODO(spotlightishere): Flush this out in a better way
-            _ => {
-                let gray_image = GrayImage::from_raw(
-                    raw_format.width,
-                    raw_format.height,
-                    raw_format.contents.clone(),
-                )
-                .expect("should be able to create grayscale image");
-
+            RawBitmapType::GrayscaleFour => {
+                let gray_image =
+                    GrayImage::from_raw(raw_format.width, raw_format.height, raw_format.contents)
+                        .expect("should be able to create alpha image");
                 gray_image.write_to(&mut png_writer, image::ImageFormat::Png)?;
+            }
+            RawBitmapType::GrayscaleEight => {
+                let gray_image =
+                    GrayImage::from_raw(raw_format.width, raw_format.height, raw_format.contents)
+                        .expect("should be able to create alpha image");
+                gray_image.write_to(&mut png_writer, image::ImageFormat::Png)?;
+            }
+            RawBitmapType::Rgb565 => {
+                // Parse our raw RGB565 contents by chunking every two bytes.
+                // We can then manipulate each u16.
+                let rgb_contents: Vec<u8> = raw_format
+                    .contents
+                    .chunks_exact(2)
+                    .map(|pair| u16::from_le_bytes([pair[0], pair[1]]))
+                    .flat_map(|pixel| {
+                        let r = ((pixel >> 11 & 0b11111) * (255 / 0b11111)) as u8;
+                        let g = ((pixel >> 5 & 0b111111) * (255 / 0b111111)) as u8;
+                        let b = ((pixel & 0b11111) * (255 / 0b11111)) as u8;
+
+                        [r, g, b]
+                    })
+                    .collect();
+
+                let rgb_image =
+                    RgbImage::from_raw(raw_format.width, raw_format.height, rgb_contents.clone())
+                        .expect("should be able to create an RGB image");
+
+                rgb_image.write_to(&mut png_writer, image::ImageFormat::Png)?;
+            }
+            RawBitmapType::Argb8888 => {
+                let rgba_contents: Vec<u8> = raw_format
+                    .contents
+                    .chunks_exact(4)
+                    .flat_map(|pixels| {
+                        let a = pixels[0];
+                        let r = pixels[1];
+                        let g = pixels[2];
+                        let b = pixels[3];
+
+                        [r, g, b, a]
+                    })
+                    .collect();
+
+                let rgba_image =
+                    RgbImage::from_raw(raw_format.width, raw_format.height, rgba_contents.clone())
+                        .expect("should be able to create an RGBA image");
+
+                rgba_image.write_to(&mut png_writer, image::ImageFormat::Png)?;
+            }
+            RawBitmapType::RgbEight => {
+                // Obtain our palette and raw, indexed contents.
+                let (palette, indexed_contents) = separate_palette(raw_format.contents);
+
+                // Iterate through each chunk and resolve RGBA colors from our palette.
+                let rgba_contents = indexed_contents
+                    .iter()
+                    .flat_map(|index| {
+                        // Our palette is ARGB.
+                        let (a, r, g, b) = palette[*index as usize];
+                        [a, r, g, b]
+                    })
+                    .collect();
+
+                // Finally, create our image.
+                let rgba_image =
+                    RgbaImage::from_raw(raw_format.width, raw_format.height, rgba_contents)
+                        .expect("should be able to create an RGBA image");
+
+                rgba_image.write_to(&mut png_writer, image::ImageFormat::Png)?;
+            }
+            RawBitmapType::RgbSixteen => {
+                // Obtain our palette and raw, indexed contents.
+                let (palette, indexed_contents) = separate_palette(raw_format.contents);
+
+                // Iterate through each chunk and resolve RGBA colors from our palette.
+                // As we're 16-bit, map our index from two u8 to one u16.
+                let rgba_contents = indexed_contents
+                    .chunks_exact(2)
+                    .map(|x| u16::from_le_bytes([x[0], x[1]]))
+                    .flat_map(|index| {
+                        // Our palette is ARGB.
+                        let (a, r, g, b) = palette[index as usize];
+                        [a, r, g, b]
+                    })
+                    .collect();
+
+                // Finally, create our image.
+                let rgba_image =
+                    RgbaImage::from_raw(raw_format.width, raw_format.height, rgba_contents)
+                        .expect("should be able to create an RGBA image");
+
+                rgba_image.write_to(&mut png_writer, image::ImageFormat::Png)?;
             }
         }
 
@@ -169,7 +163,6 @@ impl BitmapImage {
             width: raw_format.width,
             height: raw_format.width,
             format_type: raw_format.image_type,
-            mode: raw_format.image_mode,
             resource_id: raw_format.resource_id,
             contents: png_writer.into_inner(),
         };
@@ -180,4 +173,40 @@ impl BitmapImage {
     pub fn reduce(self) -> Result<Vec<u8>, SilverError> {
         todo!("reducing is not yet supported")
     }
+}
+
+/// An ARGB pixel.
+type ArgbPixel = (u8, u8, u8, u8);
+
+/// Reads the four first bytes of our raw contents
+/// in order to separate the palette from our contents.
+/// It then returns the palette as a tuple of four u8s,
+/// and the raw contents as a simple Vec<u8>.
+fn separate_palette(raw_contents: Vec<u8>) -> (Vec<ArgbPixel>, Vec<u8>) {
+    let palette_length = u32::from_le_bytes([
+        raw_contents[0],
+        raw_contents[1],
+        raw_contents[2],
+        raw_contents[3],
+    ]);
+
+    // The palette begins immediately after our length, a u32.
+    // It's an array of ARGB8888, so we operate over clusters of four bytes.
+    let palette_start = 4;
+    let palette_end = palette_start + (palette_length as usize * 4);
+    let palette = raw_contents[palette_start..palette_end]
+        .chunks_exact(4)
+        .flat_map(|pixels| {
+            let a = pixels[0];
+            let r = pixels[1];
+            let g = pixels[2];
+            let b = pixels[3];
+
+            [(a, r, g, b)]
+        })
+        .collect();
+
+    // Finally, separate our raw, indexed contents.
+    let indexed_contents = &raw_contents[palette_end..];
+    (palette, indexed_contents.to_vec())
 }

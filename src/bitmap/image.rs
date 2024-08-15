@@ -39,7 +39,7 @@ impl BitmapImage {
 
         // TODO(spotlightishere): Remove
         println!("{} is {:?}", resource_id, raw_format.image_type);
-        println!("\tFlags: {:?}", raw_format.flags);
+        println!("\tFlags: {:?}", raw_format.is_external);
         println!(
             "\tDimensions: {}x{} (rendered at {})",
             raw_format.width, raw_format.height, raw_format.rendered_width
@@ -56,19 +56,29 @@ impl BitmapImage {
             return Ok(None);
         }
 
+        // TODO(spotlightishere): Is this really how this field is used,
+        // or are there actually two fields indicating orientation (landscape/portrait)?
+        let width: u32;
+        let height: u32;
+        if raw_format.rendered_width as u32 == raw_format.width {
+            width = raw_format.width;
+            height = raw_format.height;
+        } else {
+            width = raw_format.height;
+            height = raw_format.width;
+        }
+
         // Now, convert our bitmap data to a PNG representation.
         let mut png_writer = Cursor::new(Vec::new());
         match raw_format.image_type {
             RawBitmapType::GrayscaleFour => {
-                let gray_image =
-                    GrayImage::from_raw(raw_format.width, raw_format.height, raw_format.contents)
-                        .expect("should be able to create alpha image");
+                let gray_image = GrayImage::from_raw(width, height, raw_format.contents)
+                    .expect("should be able to create alpha image");
                 gray_image.write_to(&mut png_writer, image::ImageFormat::Png)?;
             }
             RawBitmapType::GrayscaleEight => {
-                let gray_image =
-                    GrayImage::from_raw(raw_format.width, raw_format.height, raw_format.contents)
-                        .expect("should be able to create alpha image");
+                let gray_image = GrayImage::from_raw(width, height, raw_format.contents)
+                    .expect("should be able to create alpha image");
                 gray_image.write_to(&mut png_writer, image::ImageFormat::Png)?;
             }
             RawBitmapType::Rgb565 => {
@@ -87,9 +97,8 @@ impl BitmapImage {
                     })
                     .collect();
 
-                let rgb_image =
-                    RgbImage::from_raw(raw_format.width, raw_format.height, rgb_contents.clone())
-                        .expect("should be able to create an RGB image");
+                let rgb_image = RgbImage::from_raw(width, height, rgb_contents.clone())
+                    .expect("should be able to create an RGB image");
 
                 rgb_image.write_to(&mut png_writer, image::ImageFormat::Png)?;
             }
@@ -98,18 +107,18 @@ impl BitmapImage {
                     .contents
                     .chunks_exact(4)
                     .flat_map(|pixels| {
-                        let a = pixels[0];
-                        let r = pixels[1];
-                        let g = pixels[2];
-                        let b = pixels[3];
+                        // This is little-endian, so ARGB is actually the reverse (BGRA).
+                        let b = pixels[0];
+                        let g = pixels[1];
+                        let r = pixels[2];
+                        let a = pixels[3];
 
                         [r, g, b, a]
                     })
                     .collect();
 
-                let rgba_image =
-                    RgbImage::from_raw(raw_format.width, raw_format.height, rgba_contents.clone())
-                        .expect("should be able to create an RGBA image");
+                let rgba_image = RgbaImage::from_raw(width, height, rgba_contents.clone())
+                    .expect("should be able to create an RGBA image");
 
                 rgba_image.write_to(&mut png_writer, image::ImageFormat::Png)?;
             }
@@ -122,15 +131,14 @@ impl BitmapImage {
                     .iter()
                     .flat_map(|index| {
                         // Our palette is ARGB.
-                        let (a, r, g, b) = palette[*index as usize];
-                        [a, r, g, b]
+                        let (r, g, b, a) = palette[*index as usize];
+                        [r, g, b, a]
                     })
                     .collect();
 
                 // Finally, create our image.
-                let rgba_image =
-                    RgbaImage::from_raw(raw_format.width, raw_format.height, rgba_contents)
-                        .expect("should be able to create an RGBA image");
+                let rgba_image = RgbaImage::from_raw(width, height, rgba_contents)
+                    .expect("should be able to create an RGBA image");
 
                 rgba_image.write_to(&mut png_writer, image::ImageFormat::Png)?;
             }
@@ -145,15 +153,14 @@ impl BitmapImage {
                     .map(|x| u16::from_le_bytes([x[0], x[1]]))
                     .flat_map(|index| {
                         // Our palette is ARGB.
-                        let (a, r, g, b) = palette[index as usize];
-                        [a, r, g, b]
+                        let (r, g, b, a) = palette[index as usize];
+                        [r, g, b, a]
                     })
                     .collect();
 
                 // Finally, create our image.
-                let rgba_image =
-                    RgbaImage::from_raw(raw_format.width, raw_format.height, rgba_contents)
-                        .expect("should be able to create an RGBA image");
+                let rgba_image = RgbaImage::from_raw(width, height, rgba_contents)
+                    .expect("should be able to create an RGBA image");
 
                 rgba_image.write_to(&mut png_writer, image::ImageFormat::Png)?;
             }
@@ -191,18 +198,19 @@ fn separate_palette(raw_contents: Vec<u8>) -> (Vec<ArgbPixel>, Vec<u8>) {
     ]);
 
     // The palette begins immediately after our length, a u32.
-    // It's an array of ARGB8888, so we operate over clusters of four bytes.
+    // It's an array of RGBA8888, so we operate over clusters of four bytes.
+    // However, because this is little endian, we read it as the inverse, ABGR8888.
     let palette_start = 4;
     let palette_end = palette_start + (palette_length as usize * 4);
     let palette = raw_contents[palette_start..palette_end]
         .chunks_exact(4)
         .flat_map(|pixels| {
-            let a = pixels[0];
-            let r = pixels[1];
-            let g = pixels[2];
-            let b = pixels[3];
+            let b = pixels[0];
+            let g = pixels[1];
+            let r = pixels[2];
+            let a = pixels[3];
 
-            [(a, r, g, b)]
+            [(r, g, b, a)]
         })
         .collect();
 

@@ -60,7 +60,7 @@ impl RawBitmapData {
     pub fn parse(raw_data: Vec<u8>) -> Result<Self, SilverError> {
         // Read the internal representation.
         let resource_length = raw_data.len() as u32;
-        let cursor = Cursor::new(raw_data);
+        let cursor = Cursor::new(raw_data.clone());
         let mut helper = LittleHelper(cursor);
 
         let mut representation = RawBitmapData {

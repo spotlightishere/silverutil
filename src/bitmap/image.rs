@@ -72,7 +72,19 @@ impl BitmapImage {
         let mut png_writer = Cursor::new(Vec::new());
         match raw_format.image_type {
             RawBitmapType::GrayscaleFour => {
-                let gray_image = GrayImage::from_raw(width, height, raw_format.contents)
+                // We have two pixels in every byte.
+                let gray_contents: Vec<u8> = raw_format
+                    .contents
+                    .into_iter()
+                    .flat_map(|pixel| {
+                        let lower: u8 = pixel >> 4;
+                        let upper: u8 = pixel & 0xF;
+
+                        [lower, upper]
+                    })
+                    .collect();
+
+                let gray_image = GrayImage::from_raw(width, height, gray_contents)
                     .expect("should be able to create alpha image");
                 gray_image.write_to(&mut png_writer, image::ImageFormat::Png)?;
             }

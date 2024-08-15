@@ -2,6 +2,7 @@
 
 # For extracted output
 *.yaml
+*.png
 
 # SilverDB files
 *.bin

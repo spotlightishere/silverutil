@@ -66,8 +66,8 @@ impl SectionType {
         }
     }
 
-    /// Converts the current enum to its four-byte string.
-    pub fn to_string(&self) -> String {
+    /// Converts the current enum to its four-byte name.
+    pub fn to_name(&self) -> String {
         // As our mapped values are little-endian, we now handle this as
         // big-endian in order to have it be readable.
         let magic_value = u32::from_le_bytes(self.to_magic());
@@ -75,13 +75,13 @@ impl SectionType {
         String::from_utf8(big_endian_value).expect("invalid ASCII magic")
     }
 
-    /// Obtains an enum value based on its four-byte string.
-    pub fn from_string(magic: String) -> Result<Self, SilverError> {
-        // Our strings are assumed to be big-endian, and four characters.
-        let string_bytes = magic.as_bytes().try_into()?;
+    /// Obtains an enum value based on its four-byte name.
+    pub fn from_name(magic: String) -> Result<Self, SilverError> {
+        // Our names are assumed to be big-endian, and four characters.
+        let name_bytes = magic.as_bytes().try_into()?;
 
         // Reverse this big-endian format to be little-endian.
-        let raw_magic = u32::from_be_bytes(string_bytes).to_le_bytes();
+        let raw_magic = u32::from_be_bytes(name_bytes).to_le_bytes();
 
         Ok(Self::from_magic(raw_magic))
     }
@@ -96,7 +96,7 @@ impl<'de> Deserialize<'de> for SectionType {
         use serde::de::Error;
 
         let magic: String = Deserialize::deserialize(deserializer)?;
-        let raw_magic = SectionType::from_string(magic).map_err(Error::custom)?;
+        let raw_magic = SectionType::from_name(magic).map_err(Error::custom)?;
         Ok(raw_magic)
     }
 }
@@ -125,7 +125,7 @@ impl fmt::Display for SectionType {
 
             SectionType::Unknown(magic) => {
                 let magic_value = u32::from_le_bytes(*magic);
-                temp_magic = format!("{:?} (0x{:02X})", self.to_string(), magic_value);
+                temp_magic = format!("{:?} (0x{:02X})", self.to_name(), magic_value);
                 temp_magic.as_str()
             }
         };

@@ -1,8 +1,8 @@
+use image::ImageError;
 use serde::ser::StdError;
 use std::array::TryFromSliceError;
-use std::fmt;
-use std::io;
 use std::string::FromUtf8Error;
+use std::{fmt, io};
 
 /// Possible errors encountered when parsing, or etc.
 #[derive(Debug)]
@@ -11,6 +11,8 @@ pub enum SilverError {
     InvalidVersion,
     ParseError(io::Error),
     InvalidMagic,
+    InvalidBitmap,
+    ImageError(ImageError),
 }
 
 impl From<io::Error> for SilverError {
@@ -33,6 +35,13 @@ impl From<TryFromSliceError> for SilverError {
     }
 }
 
+// Used for when converting between images and bitmaps.
+impl From<ImageError> for SilverError {
+    fn from(value: ImageError) -> Self {
+        SilverError::ImageError(value)
+    }
+}
+
 impl fmt::Display for SilverError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
@@ -40,6 +49,8 @@ impl fmt::Display for SilverError {
             Self::InvalidMagic => write!(f, "Invalid magic detected!"),
             Self::ParseError(e) => write!(f, "Failed to parse file format: {e}"),
             Self::InvalidVersion => write!(f, "Invalid version of SilverDB file encountered!"),
+            Self::InvalidBitmap => write!(f, "Invalid bitmap resourcee entry encountered!"),
+            Self::ImageError(e) => write!(f, "Failed to convert image: {}", e),
         }
     }
 }
@@ -51,6 +62,8 @@ impl StdError for SilverError {
             Self::InvalidMagic => "Invalid magic detected!",
             Self::ParseError(_) => "Failed to parse file format.",
             Self::InvalidVersion => "Invalid version of SilverDB file encountered!",
+            Self::InvalidBitmap => "Invalid version of SilverDB file encountered!",
+            Self::ImageError(_) => "Failed to convert image.",
         }
     }
 }

@@ -31,11 +31,17 @@ pub struct SilverSection {
 /// The ID identifying this resource.
 /// In general you should never modify the ID as it may be hardcoded in firmware.
 #[derive(Deserialize, Serialize)]
-pub struct SilverResourceID(u32);
+pub struct SilverResourceID(pub u32);
 
 impl fmt::Display for SilverResourceID {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "0x{:08x}", self.0)
+    }
+}
+
+impl From<u32> for SilverResourceID {
+    fn from(value: u32) -> Self {
+        SilverResourceID(value)
     }
 }
 

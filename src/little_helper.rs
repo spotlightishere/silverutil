@@ -25,6 +25,16 @@ impl LittleHelper {
         self.0.position() as u32
     }
 
+    /// Reads a singular byte.
+    pub fn read_u8(&mut self) -> Result<u8, io::Error> {
+        self.0.read_u8()
+    }
+
+    /// Reads a little-endian u16.
+    pub fn read_u16_le(&mut self) -> Result<u16, io::Error> {
+        self.0.read_u16::<LittleEndian>()
+    }
+
     /// Reads a little-endian u32.
     pub fn read_u32_le(&mut self) -> Result<u32, io::Error> {
         self.0.read_u32::<LittleEndian>()

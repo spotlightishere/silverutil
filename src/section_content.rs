@@ -1,13 +1,14 @@
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
-use crate::{section_types::SectionType, silver_error::SilverError};
+use crate::{bitmap::BitmapImage, section_types::SectionType, silver_error::SilverError};
 
 /// Content represented by sections within.
 #[derive(Deserialize, Serialize)]
 pub enum SectionContent {
     // TODO(spotlightishere): Images should be parsed accordingly
-    #[serde(with = "RawData")]
-    Bitmap(Vec<u8>),
+    /// A bitmap image.
+    /// Some bitmap images have zero length. These should be `Option::None`.
+    Bitmap(Option<BitmapImage>),
 
     #[serde(with = "RawData")]
     DateTimeLocale(Vec<u8>),
@@ -44,7 +45,7 @@ impl RawData {
 
 /// As many resources are C strings, they contain a null terminator.
 /// We process them by removing the trailing null terminator.
-fn process_c_string(raw_data: Vec<u8>) -> Result<std::string::String, SilverError> {
+fn process_c_string(raw_data: Vec<u8>) -> Result<String, SilverError> {
     let mut contents = String::from_utf8(raw_data)?;
     // Remove the last byte, a null byte.
     contents.truncate(contents.len() - 1);
@@ -68,8 +69,7 @@ impl SectionContent {
         raw_data: Vec<u8>,
     ) -> Result<SectionContent, SilverError> {
         let section_content = match section_type {
-            // TODO(spotlightishere): Handle bitmap parsing
-            SectionType::Bitmap => SectionContent::Bitmap(raw_data),
+            SectionType::Bitmap => SectionContent::Bitmap(BitmapImage::parse(raw_data)?),
             SectionType::DateTimeLocale => SectionContent::DateTimeLocale(raw_data),
             // Several types are simply C strings.
             SectionType::String
@@ -87,7 +87,14 @@ impl SectionContent {
     pub fn reduce_section(section_content: SectionContent) -> Result<Vec<u8>, SilverError> {
         let raw_data = match section_content {
             // TODO(spotlightishere): Handle bitmap parsing
-            SectionContent::Bitmap(raw_contents) => raw_contents,
+            SectionContent::Bitmap(raw_contents) => {
+                // For our zero-length bitmap images, return an empty vector.
+                if let Some(contents) = raw_contents {
+                    contents.reduce()?
+                } else {
+                    Vec::new()
+                }
+            }
             SectionContent::DateTimeLocale(raw_contents) => raw_contents,
             SectionContent::Unknown(raw_contents) => raw_contents,
             SectionContent::String(raw_string) => create_c_string(raw_string),

@@ -39,7 +39,7 @@ impl BitmapImage {
 
         // TODO(spotlightishere): Remove
         println!("{} is {:?}", resource_id, raw_format.image_type);
-        println!("\tFlags: {:?}", raw_format.is_external);
+        println!("\tColor depth: {:?}", raw_format.color_depth);
         println!(
             "\tDimensions: {}x{} (rendered at {})",
             raw_format.width, raw_format.height, raw_format.rendered_width
@@ -51,11 +51,6 @@ impl BitmapImage {
             return Ok(None);
         }
 
-        // TODO(spotlightishere): Better handle non-grayscale images
-        if raw_format.width * raw_format.height > raw_format.contents.len() as u32 {
-            return Ok(None);
-        }
-
         // TODO(spotlightishere): Is this really how this field is used,
         // or are there actually two fields indicating orientation (landscape/portrait)?
         let width: u32;
@@ -63,6 +58,12 @@ impl BitmapImage {
         if raw_format.rendered_width as u32 == raw_format.width {
             width = raw_format.width;
             height = raw_format.height;
+        } else if raw_format.image_type == RawBitmapType::GrayscaleEight {
+            width = raw_format.rendered_width as u32;
+            height = raw_format.width;
+        } else if raw_format.image_type == RawBitmapType::GrayscaleFour {
+            width = raw_format.rendered_width as u32 * 2;
+            height = raw_format.width;
         } else {
             width = raw_format.height;
             height = raw_format.width;
@@ -77,20 +78,20 @@ impl BitmapImage {
                     .contents
                     .into_iter()
                     .flat_map(|pixel| {
-                        let lower: u8 = pixel >> 4;
-                        let upper: u8 = pixel & 0xF;
+                        let lower: u8 = (pixel >> 4) * 16;
+                        let upper: u8 = (pixel & 0xF) * 16;
 
                         [lower, upper]
                     })
                     .collect();
 
                 let gray_image = GrayImage::from_raw(width, height, gray_contents)
-                    .expect("should be able to create alpha image");
+                    .expect("should be able to create grayscale image");
                 gray_image.write_to(&mut png_writer, image::ImageFormat::Png)?;
             }
             RawBitmapType::GrayscaleEight => {
                 let gray_image = GrayImage::from_raw(width, height, raw_format.contents)
-                    .expect("should be able to create alpha image");
+                    .expect("should be able to create grayscale image");
                 gray_image.write_to(&mut png_writer, image::ImageFormat::Png)?;
             }
             RawBitmapType::Rgb565 => {

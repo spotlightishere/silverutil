@@ -44,8 +44,9 @@ pub struct RawBitmapData {
     pub is_external: u16,
     /// The width this bitmap image will be rendered at.
     pub rendered_width: u16,
-    /// Possibly flags associated with this image.
-    pub flags: u16,
+    /// The color depth associated with this image.
+    /// (This is correlated to the image's bitmap type.)
+    pub color_depth: u16,
     pub padding_one: u32,
     pub padding_two: u32,
     pub width: u32,
@@ -67,7 +68,7 @@ impl RawBitmapData {
             image_type: helper.read_u16_le()?.try_into()?,
             is_external: helper.read_u16_le()?,
             rendered_width: helper.read_u16_le()?,
-            flags: helper.read_u16_le()?,
+            color_depth: helper.read_u16_le()?,
             padding_one: helper.read_u32_le()?,
             padding_two: helper.read_u32_le()?,
             width: helper.read_u32_le()?,

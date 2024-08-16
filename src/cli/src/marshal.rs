@@ -9,7 +9,7 @@ use silverlib::{
 #[derive(Deserialize, Serialize)]
 /// Generic section metadata.
 pub struct SectionMetadata {
-    magic: SectionType,
+    magic: String,
     is_sequential: u32,
     resources: Vec<SilverResource>,
 }
@@ -17,7 +17,7 @@ pub struct SectionMetadata {
 #[derive(Deserialize, Serialize)]
 /// Bitmap-specific section metadata.
 pub struct BitmapMetadata {
-    magic: SectionType,
+    magic: String,
     is_sequential: u32,
     resources: Vec<BitmapImageMetadata>,
 }
@@ -105,7 +105,7 @@ pub fn serialize_contents(database: SilverDB, output_dir: &Path) -> Result<(), A
                 }
 
                 let bitmap_metadata = BitmapMetadata {
-                    magic: current_section.section_type,
+                    magic: current_section.section_type.to_name(),
                     is_sequential: current_section.is_sequential,
                     resources: bitmap_list,
                 };
@@ -115,7 +115,7 @@ pub fn serialize_contents(database: SilverDB, output_dir: &Path) -> Result<(), A
             // Otherwise, simply write out a raw representation of the section's metadata.
             _ => {
                 let section_metadata = SectionMetadata {
-                    magic: current_section.section_type,
+                    magic: current_section.section_type.to_name(),
                     is_sequential: current_section.is_sequential,
                     resources: current_section.resources,
                 };
@@ -157,16 +157,17 @@ pub fn deserialize_contents(input_dir: &Path, database_path: &Path) -> Result<()
         let file_name = format!("{}.yaml", section_name);
         let section_path = input_dir.join(Path::new(&file_name));
         let section_contents: SectionMetadata = read_yaml(&section_path)?;
+        let section_type = SectionType::from_name(section_contents.magic)?;
 
         // TODO(spotlightishere): Implement
-        if section_contents.magic == SectionType::Bitmap
-            || section_contents.magic == SectionType::StatusBarBitmap
+        if section_type == SectionType::Bitmap
+            || section_type == SectionType::StatusBarBitmap
         {
             todo!("deserialization of bitmap contents is not currently implemented");
         }
 
         let current_section = SilverSection {
-            section_type: section_contents.magic,
+            section_type,
             is_sequential: section_contents.is_sequential,
             resources: section_contents.resources,
         };

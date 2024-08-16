@@ -18,6 +18,8 @@ pub struct BitmapImage {
     pub width: u32,
     /// The height of our bitmap data.
     pub height: u32,
+    /// The width this bitmap image is rendered at.
+    pub rendered_width: u16,
     /// The format this bitmap image is encoded in.
     pub format_type: RawBitmapType,
     /// The resource ID this bitmap data is associated with.
@@ -35,9 +37,9 @@ impl BitmapImage {
         }
 
         let raw_format = RawBitmapData::parse(raw_data.clone())?;
-        let resource_id = raw_format.resource_id;
 
         // TODO(spotlightishere): Remove
+        let resource_id = raw_format.resource_id;
         println!("{} is {:?}", resource_id, raw_format.image_type);
         println!("\tColor depth: {:?}", raw_format.color_depth);
         println!(
@@ -183,6 +185,7 @@ impl BitmapImage {
             width: raw_format.width,
             height: raw_format.width,
             format_type: raw_format.image_type,
+            rendered_width: raw_format.rendered_width,
             resource_id: raw_format.resource_id,
             contents: png_writer.into_inner(),
         };

@@ -27,6 +27,7 @@ pub struct BitmapMetadata {
 pub struct BitmapImageMetadata {
     pub width: u32,
     pub height: u32,
+    pub rendered_width: u16,
     pub format_type: RawBitmapType,
     pub resource_id: u32,
     pub path: String,
@@ -77,6 +78,7 @@ pub fn serialize_contents(database: SilverDB, output_dir: &Path) -> Result<(), A
                         let empty_metadata = BitmapImageMetadata {
                             width: 0,
                             height: 0,
+                            rendered_width: 0,
                             // This is not actually the format type, as it has none.
                             format_type: RawBitmapType::Rgb565,
                             resource_id,
@@ -94,6 +96,7 @@ pub fn serialize_contents(database: SilverDB, output_dir: &Path) -> Result<(), A
                     let entry_metadata = BitmapImageMetadata {
                         width: entry_contents.width,
                         height: entry_contents.height,
+                        rendered_width: entry_contents.rendered_width,
                         format_type: entry_contents.format_type,
                         resource_id: entry_contents.resource_id,
                         path: output_relative,

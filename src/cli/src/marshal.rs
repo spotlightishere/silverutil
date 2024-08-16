@@ -54,7 +54,7 @@ pub fn serialize_contents(database: SilverDB, output_dir: &Path) -> Result<(), A
         // type in order to persist this section's magic and flags.
         // However, we must handle bitmap images separately.
         match current_section.section_type {
-            SectionType::Bitmap | SectionType::SilverBitmap => {
+            SectionType::Bitmap | SectionType::StatusBarBitmap => {
                 // Keep track of written bitmap image entries.
                 let mut bitmap_list = Vec::new();
 
@@ -157,7 +157,7 @@ pub fn deserialize_contents(input_dir: &Path, database_path: &Path) -> Result<()
 
         // TODO(spotlightishere): Implement
         if section_contents.magic == SectionType::Bitmap
-            || section_contents.magic == SectionType::SilverBitmap
+            || section_contents.magic == SectionType::StatusBarBitmap
         {
             todo!("deserialization of bitmap contents is not currently implemented");
         }

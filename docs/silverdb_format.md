@@ -81,7 +81,7 @@ The names of sections are presented in big-endian for readability (i.e. `BMap` i
 | `SRVL` | `0x5352564c` |  |
 | `SStr` | `0x53537472` |  |
 | `SUse` | `0x53557365` |  |
-| `StBM` | `0x5374424d` | Seen within an iPod nano 7G's internal ROM. Perhaps bitmap images? |
+| `StBM` | `0x5374424d` | Bitmap images for use within the status bar. |
 | `Str ` | `0x53747220` | Strings used within various UI components. Translations can be found within `SilverDB.xx_XX.LE.bin`. |
 | `StrT` | `0x53747254` | Base descriptions of view text (i.e. `PhotosSettingsSlideshowMusic_Screen_Nested_Default` or `PhotosGL_Camera_Delete_All_Confirmation_Alt`) |
 | `T10N` | `0x5431304e` |  |

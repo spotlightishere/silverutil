@@ -7,9 +7,8 @@ use std::fmt;
 pub enum SectionType {
     /// Represents bitmap images within a section ('BMap').
     Bitmap,
-    /// Represents hardcoded bitmap images for unknown usage ('StBM').
-    // TODO(spotlightishere): This name is most certainly incorrect.
-    SilverBitmap,
+    /// Represents hardcoded bitmap images for usage within the status bar ('StBM').
+    StatusBarBitmap,
     /// Represents UI strings ('Str ').
     String,
     /// Represents placeholders for view strings. ('StrT')
@@ -40,7 +39,7 @@ impl SectionType {
             // 'BMap' (BE) or 'paMB' (LE)
             [0x70, 0x61, 0x4D, 0x42] => SectionType::Bitmap,
             // 'StBM' (BE) or 'MBtS' (LE)
-            [0x4D, 0x42, 0x74, 0x53] => SectionType::SilverBitmap,
+            [0x4D, 0x42, 0x74, 0x53] => SectionType::StatusBarBitmap,
             // 'ACST' (BE) or 'TSCA' (LE)
             [0x54, 0x53, 0x43, 0x41] => SectionType::AnimControllerString,
             // 'SCST' (BE) or 'TSCS' (LE)
@@ -63,7 +62,7 @@ impl SectionType {
             // 'BMap' (BE) or 'paMB' (LE)
             SectionType::Bitmap => [0x70, 0x61, 0x4D, 0x42],
             // 'StBM' (BE) or 'MBtS' (LE)
-            SectionType::SilverBitmap => [0x4D, 0x42, 0x74, 0x53],
+            SectionType::StatusBarBitmap => [0x4D, 0x42, 0x74, 0x53],
             // 'ACST' (BE) or 'TSCA' (LE)
             SectionType::AnimControllerString => [0x54, 0x53, 0x43, 0x41],
             // 'SCST' (BE) or 'TSCS' (LE)
@@ -124,7 +123,7 @@ impl fmt::Display for SectionType {
         let description = match self {
             SectionType::AnimControllerString => "Animation Controller Strings",
             SectionType::Bitmap => "Bitmap",
-            SectionType::SilverBitmap => "Silver Bitmap",
+            SectionType::StatusBarBitmap => "Status Bar Bitmap",
             SectionType::DateTimeLocale => "Date/Time Locale",
             SectionType::SilverControllerString => "Silver UI Controller Strings",
             SectionType::String => "Strings",

@@ -69,7 +69,7 @@ impl SectionContent {
         raw_data: Vec<u8>,
     ) -> Result<SectionContent, SilverError> {
         let section_content = match section_type {
-            SectionType::Bitmap | SectionType::SilverBitmap => {
+            SectionType::Bitmap | SectionType::StatusBarBitmap => {
                 SectionContent::Bitmap(BitmapImage::parse(raw_data)?)
             }
             SectionType::DateTimeLocale => SectionContent::DateTimeLocale(raw_data),

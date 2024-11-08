@@ -66,6 +66,9 @@ impl BitmapImage {
         } else if raw_format.image_type == RawBitmapType::GrayscaleFour {
             width = raw_format.rendered_width as u32 * 2;
             height = raw_format.width;
+        } else if raw_format.image_type == RawBitmapType::GrayscaleTwo {
+            width = raw_format.rendered_width as u32 * 4;
+            height = raw_format.width;
         } else {
             width = raw_format.height;
             height = raw_format.width;
@@ -74,6 +77,25 @@ impl BitmapImage {
         // Now, convert our bitmap data to a PNG representation.
         let mut png_writer = Cursor::new(Vec::new());
         match raw_format.image_type {
+            RawBitmapType::GrayscaleTwo => {
+                // We have four pixels in every byte.
+                let gray_contents: Vec<u8> = raw_format
+                    .contents
+                    .into_iter()
+                    .flat_map(|pixel| {
+                        let one: u8 = (pixel & 0x3) * 32;
+                        let two: u8 = ((pixel >> 2) & 0x3) * 32;
+                        let three: u8 = ((pixel >> 4) & 0x3) * 32;
+                        let four: u8 = ((pixel >> 6) & 0x3) * 32;
+
+                        [four, three, two, one]
+                    })
+                    .collect();
+
+                let gray_image = GrayImage::from_raw(width, height, gray_contents)
+                    .expect("should be able to create grayscale image");
+                gray_image.write_to(&mut png_writer, image::ImageFormat::Png)?;
+            }
             RawBitmapType::GrayscaleFour => {
                 // We have two pixels in every byte.
                 let gray_contents: Vec<u8> = raw_format

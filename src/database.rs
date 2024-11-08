@@ -61,11 +61,6 @@ impl SilverDB {
         let reader = Cursor::new(file_contents);
         let database_file = SilverDBFormat::read(reader)?;
 
-        // Sanity check:
-        if database_file.header.version != 3 {
-            return Err(SilverError::InvalidVersion);
-        }
-
         // Next, create the high-level representation.
         let mut sections: Vec<SilverSection> = Vec::new();
         for raw_section in database_file.sections {

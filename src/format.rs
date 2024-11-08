@@ -67,6 +67,11 @@ impl SilverDBFormat {
             section_count: reader.read_u32_le()?,
         };
 
+        // Sanity check:
+        if db_header.version != 3 {
+            return Err(SilverError::InvalidVersion);
+        }
+
         // Next, read all section metadata. Their metadata immediately follows the header.
         let mut db_sections: Vec<SectionHeader> = Vec::new();
         for _ in 0..db_header.section_count {

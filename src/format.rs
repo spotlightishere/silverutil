@@ -2,6 +2,12 @@ use std::io::Cursor;
 
 use crate::{little_helper::LittleHelper, silver_error::SilverError};
 
+/// Simple function to determine whether the current byte is printable ASCII.
+fn is_ascii(current_byte: u8) -> bool {
+    // Readable characters are from a space (ASCII 32) to a tilde (ASCII 126).
+    (32..=128).contains(&current_byte)
+}
+
 /// Simply a u32, but we read it as an array to ensure endianness.
 pub type SectionMagic = [u8; 4];
 
@@ -59,20 +65,65 @@ impl SilverDBFormat {
     /// Reads a SilverDB-format file, returning a representation of its contents.
     pub fn read(raw_reader: Cursor<Vec<u8>>) -> Result<Self, SilverError> {
         let mut reader = LittleHelper(raw_reader);
+        let reader_length = reader.len()?;
 
-        // First, read the header.
+        // First, do we have enough space to read the header?
+        // Let's assume a header with one section and one resource entry.
+        // At minimum, that's 40 bytes.
+        if 40 > reader_length {
+            return Err(SilverError::InvalidHeader);
+        }
+
+        // Next, read the header.
         let db_header = SilverDBHeader {
             version: reader.read_u32_le()?,
             header_length: reader.read_u32_le()?,
             section_count: reader.read_u32_le()?,
         };
 
-        // Sanity check:
+        // Let's apply a few sanity checks:
+        //
+        // First, do we have the correct database header version?
         if db_header.version != 3 {
-            return Err(SilverError::InvalidVersion);
+            return Err(SilverError::InvalidHeader);
         }
 
-        // Next, read all section metadata. Their metadata immediately follows the header.
+        // Next, let's validate our header's length.
+        // The header length can get very long: firmware 1.1.2 for the
+        // iPod nano 7th gen has a 136,912 byte long header.
+        //
+        // However, for sanity, we should likely never see it exceed 256 kilobytes.
+        let max_header_size = 256 * 1024;
+        let read_header_length = db_header.header_length;
+        if read_header_length == 0 || read_header_length > max_header_size {
+            return Err(SilverError::InvalidHeader);
+        }
+
+        // We'll then validate section count. Official firmware imposes
+        // no limit on the amount of sections in a database by official firmware.
+        // However, we can assume no iPod will ever have more than 128 sections.
+        let max_section_count = 128;
+        let read_section_count = db_header.section_count;
+        if read_section_count == 0 || read_section_count > max_section_count {
+            return Err(SilverError::InvalidHeader);
+        }
+
+        // Similarly to our first sanity check: do we feasibly have space for
+        // the specified header length? We know it's a reasonable value,
+        // but it may not actually be valid.
+        //
+        // We begin with 12 bytes for our initial metadata.
+        // Every section has 16 bytes of metadata, alongside resource entries.
+        // Let's assume every section has zero resources.
+        let expected_header_length = 12 + (16 * db_header.section_count);
+        if expected_header_length > reader_length {
+            return Err(SilverError::InvalidHeader);
+        }
+
+        // We should be good: this seems like a valid header!
+        //
+        // Let's read all section metadata.
+        // Their metadata immediately follows the header.
         let mut db_sections: Vec<SectionHeader> = Vec::new();
         for _ in 0..db_header.section_count {
             let current_section = SectionHeader {
@@ -83,6 +134,22 @@ impl SilverDBFormat {
                 // This will be backfilled once we finish reading all section metadata.
                 resources: Vec::new(),
             };
+
+            // We expect all section header magic to be printable ASCII characters.
+            let magic = current_section.magic;
+            if !(is_ascii(magic[0])
+                && is_ascii(magic[1])
+                && is_ascii(magic[2])
+                && is_ascii(magic[3]))
+            {
+                return Err(SilverError::InvalidHeader);
+            }
+
+            // We additionally expect is_sequential to be a valid boolean value.
+            let is_sequential = current_section.is_sequential;
+            if !(is_sequential == 0 || is_sequential == 1) {
+                return Err(SilverError::InvalidHeader);
+            }
 
             db_sections.push(current_section);
         }

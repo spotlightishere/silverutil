@@ -1,6 +1,6 @@
 use crate::SectionMagic;
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
-use std::{io, io::Cursor, io::Read, io::Write};
+use std::io::{self, Cursor, Read, Seek, Write};
 
 /// Helper to assist with reading and writing little-endian values.
 pub struct LittleHelper(pub Cursor<Vec<u8>>);
@@ -13,6 +13,20 @@ impl LittleHelper {
     /// Returns the inner vector represented by this LittleHelper.
     pub fn contents(self) -> Vec<u8> {
         self.0.into_inner()
+    }
+
+    /// Returns the length of the inner vector represented by this LittleHelper.
+    pub fn len(&mut self) -> Result<u32, io::Error> {
+        // We cannot easily access the inner contents of our cursor
+        // without consuming it. Instead, let's seek to the end,
+        // and then seek back to our original position.
+        //
+        // TODO(spotlightishere): Surely this could be done better without a cursor...
+        let original_position = self.0.position();
+        let end_position = self.0.seek(io::SeekFrom::End(0))?;
+        self.0.set_position(original_position);
+
+        Ok(end_position as u32)
     }
 
     /// Seeks to the given u32.

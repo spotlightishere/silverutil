@@ -57,7 +57,7 @@ pub struct SilverResource {
 
 impl SilverDB {
     pub fn read(file_contents: Vec<u8>) -> Result<Self, SilverError> {
-        // First, parse the actual file via binrw.
+        // First, parse the actual file.
         let reader = Cursor::new(file_contents);
         let database_file = SilverDBFormat::read(reader)?;
 

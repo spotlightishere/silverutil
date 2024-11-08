@@ -8,7 +8,7 @@ use std::{fmt, io};
 #[derive(Debug)]
 pub enum SilverError {
     ContentParseFailure(FromUtf8Error),
-    InvalidVersion,
+    InvalidHeader,
     ParseError(io::Error),
     InvalidMagic,
     InvalidBitmap,
@@ -48,8 +48,8 @@ impl fmt::Display for SilverError {
             Self::ContentParseFailure(e) => write!(f, "Failed to parse section content: {e}"),
             Self::InvalidMagic => write!(f, "Invalid magic detected!"),
             Self::ParseError(e) => write!(f, "Failed to parse file format: {e}"),
-            Self::InvalidVersion => write!(f, "Invalid version of SilverDB file encountered!"),
-            Self::InvalidBitmap => write!(f, "Invalid bitmap resourcee entry encountered!"),
+            Self::InvalidHeader => write!(f, "Invalid header for SilverDB file encountered!"),
+            Self::InvalidBitmap => write!(f, "Invalid bitmap resource entry encountered!"),
             Self::ImageError(e) => write!(f, "Failed to convert image: {}", e),
         }
     }
@@ -61,8 +61,8 @@ impl StdError for SilverError {
             Self::ContentParseFailure(_) => "Failed to parse section content.",
             Self::InvalidMagic => "Invalid magic detected!",
             Self::ParseError(_) => "Failed to parse file format.",
-            Self::InvalidVersion => "Invalid version of SilverDB file encountered!",
-            Self::InvalidBitmap => "Invalid version of SilverDB file encountered!",
+            Self::InvalidHeader => "Invalid header for SilverDB file encountered!",
+            Self::InvalidBitmap => "Invalid bitmap resource entry encountered!",
             Self::ImageError(_) => "Failed to convert image.",
         }
     }

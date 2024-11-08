@@ -80,8 +80,8 @@ impl BitmapImage {
                     .contents
                     .into_iter()
                     .flat_map(|pixel| {
-                        let lower: u8 = (pixel >> 4) * 16;
-                        let upper: u8 = (pixel & 0xF) * 16;
+                        let lower: u8 = ((pixel >> 4) & 0xf) * 16;
+                        let upper: u8 = (pixel & 0xf) * 16;
 
                         [lower, upper]
                     })
@@ -116,6 +116,26 @@ impl BitmapImage {
                     .expect("should be able to create an RGB image");
 
                 rgb_image.write_to(&mut png_writer, image::ImageFormat::Png)?;
+            }
+            RawBitmapType::Argb4444 => {
+                let rgba_contents: Vec<u8> = raw_format
+                    .contents
+                    .chunks_exact(2)
+                    .flat_map(|pixels| {
+                        // This is little-endian, so ARGB is actually the reverse (BGRA).
+                        let b: u8 = (pixels[0] & 0xf) * 16;
+                        let g: u8 = ((pixels[0] >> 4) & 0xf) * 16;
+                        let r: u8 = (pixels[1] & 0xf) * 16;
+                        let a: u8 = ((pixels[1] >> 4) & 0xf) * 16;
+
+                        [r, g, b, a]
+                    })
+                    .collect();
+
+                let rgba_image = RgbaImage::from_raw(width, height, rgba_contents.clone())
+                    .expect("should be able to create an RGBA image");
+
+                rgba_image.write_to(&mut png_writer, image::ImageFormat::Png)?;
             }
             RawBitmapType::Argb8888 => {
                 let rgba_contents: Vec<u8> = raw_format

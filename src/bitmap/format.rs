@@ -75,11 +75,29 @@ impl RawBitmapData {
             padding_two: helper.read_u32_le()?,
             width: helper.read_u32_le()?,
             height: helper.read_u32_le()?,
-            resource_id: helper.read_u32_le()?,
-            contents_length: helper.read_u32_le()?,
+            // These will be filled in below.
+            resource_id: 0,
+            contents_length: 0,
             // We'll read once we can access the content length.
             contents: vec![],
         };
+
+        // Some older firmware (e.g. for iPod classics) lacks the resource ID
+        // field within the bitmap-specific resource header, and skip
+        // directly to the bitmap `contents_length` field.
+        //
+        // Thankfully, we can logically infer what this value is intended to be:
+        // On iPods which do have resource IDs present (e.g. iPod nanos),
+        // we should expect to see a resource ID of 0xDAD0_0000 or greater.
+        // Alternatively, we may see a resource ID of 0 for some `StBm` images.
+        let next_u32 = helper.read_u32_le()?;
+        if next_u32 >= 0x0DAD_0000 || next_u32 == 0 {
+            // We'll fill in the resource ID, and read the actual content length.
+            representation.resource_id = next_u32;
+            representation.contents_length = helper.read_u32_le()?;
+        } else {
+            representation.contents_length = next_u32;
+        }
 
         // Ensure that we have exactly enough data available to read the content's length.
         let remaining_data = resource_length - helper.pos_as_u32();

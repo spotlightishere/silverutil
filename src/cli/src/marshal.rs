@@ -160,9 +160,7 @@ pub fn deserialize_contents(input_dir: &Path, database_path: &Path) -> Result<()
         let section_type = SectionType::from_name(section_contents.magic)?;
 
         // TODO(spotlightishere): Implement
-        if section_type == SectionType::Bitmap
-            || section_type == SectionType::StatusBarBitmap
-        {
+        if section_type == SectionType::Bitmap || section_type == SectionType::StatusBarBitmap {
             todo!("deserialization of bitmap contents is not currently implemented");
         }
 

@@ -5,6 +5,7 @@ use std::{fs::File, io::Read, path::PathBuf};
 use silverlib::{SectionContent, SectionType, SilverDB};
 
 mod marshal;
+mod scrape;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -19,17 +20,24 @@ enum Subcommands {
     Extract {
         /// Path to Silver database to extract
         database_path: PathBuf,
-        /// Directory to output YAML representation within
+        /// Directory to output YAML representations within
         output_dir: PathBuf,
     },
     /// Displays information about contents present within sections
     Info { database_path: PathBuf },
     /// Creates a database from a YAML representation
     Create {
-        /// Directory YAML representation in within
+        /// Directory holding the YAML representations to create from
         input_dir: PathBuf,
         /// Path to write Silver databases to
         database_path: PathBuf,
+    },
+    /// Scrapes SilverDBs embedded within a given firmware file
+    Scrape {
+        /// Path to the retailOS firmware to scrape databases from.
+        firmware_path: PathBuf,
+        /// Directory to output SilverDBs within
+        output_dir: PathBuf,
     },
 }
 
@@ -55,6 +63,11 @@ fn main() {
             marshal::deserialize_contents(&input_dir, &database_path)
                 .expect("failed to deserialize YAML representation");
         }
+        Subcommands::Scrape {
+            firmware_path,
+            output_dir,
+        } => scrape::handle_scrape(&firmware_path, &output_dir)
+            .expect("failed to scrape resource databases within firmware"),
     };
 }
 

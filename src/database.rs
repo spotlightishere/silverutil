@@ -57,8 +57,12 @@ pub struct SilverResource {
 
 impl SilverDB {
     pub fn read(file_contents: Vec<u8>) -> Result<Self, SilverError> {
-        // First, parse the actual file.
         let reader = Cursor::new(file_contents);
+        SilverDB::read_cursor(reader)
+    }
+
+    pub fn read_cursor(reader: Cursor<Vec<u8>>) -> Result<Self, SilverError> {
+        // First, parse the actual file.
         let database_file = SilverDBFormat::read(reader)?;
 
         // Next, create the high-level representation.

@@ -32,7 +32,7 @@ impl TryFrom<u16> for RawBitmapType {
             x if x == RawBitmapType::Argb8888 as u16 => Ok(RawBitmapType::Argb8888),
             x if x == RawBitmapType::RgbEight as u16 => Ok(RawBitmapType::RgbEight),
             x if x == RawBitmapType::RgbSixteen as u16 => Ok(RawBitmapType::RgbSixteen),
-            _ => Err(SilverError::InvalidBitmap),
+            _ => Err(SilverError::UnknownBitmap),
         }
     }
 }

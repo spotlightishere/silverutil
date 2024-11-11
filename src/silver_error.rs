@@ -12,6 +12,7 @@ pub enum SilverError {
     ParseError(io::Error),
     InvalidMagic,
     InvalidBitmap,
+    UnknownBitmap,
     ImageError(ImageError),
 }
 
@@ -50,6 +51,7 @@ impl fmt::Display for SilverError {
             Self::ParseError(e) => write!(f, "Failed to parse file format: {e}"),
             Self::InvalidHeader => write!(f, "Invalid header for SilverDB file encountered!"),
             Self::InvalidBitmap => write!(f, "Invalid bitmap resource entry encountered!"),
+            Self::UnknownBitmap => write!(f, "Unknown bitmap resource entry type encountered!"),
             Self::ImageError(e) => write!(f, "Failed to convert image: {}", e),
         }
     }
@@ -63,6 +65,7 @@ impl StdError for SilverError {
             Self::ParseError(_) => "Failed to parse file format.",
             Self::InvalidHeader => "Invalid header for SilverDB file encountered!",
             Self::InvalidBitmap => "Invalid bitmap resource entry encountered!",
+            Self::UnknownBitmap => "Unknown bitmap resource entry type encountered!",
             Self::ImageError(_) => "Failed to convert image.",
         }
     }

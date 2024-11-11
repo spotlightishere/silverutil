@@ -66,6 +66,29 @@ impl BitmapImage {
         // Now, convert our bitmap data to a PNG representation.
         let mut png_writer = Cursor::new(Vec::new());
         match raw_format.image_type {
+            RawBitmapType::Grayscale => {
+                // We have eight pixels in every byte.
+                let gray_contents: Vec<u8> = raw_format
+                    .contents
+                    .into_iter()
+                    .flat_map(|pixel| {
+                        let one: u8 = (pixel & 0x1) * 255;
+                        let two: u8 = ((pixel >> 1) & 0x1) * 255;
+                        let three: u8 = ((pixel >> 2) & 0x1) * 255;
+                        let four: u8 = ((pixel >> 3) & 0x1) * 255;
+                        let five: u8 = ((pixel >> 4) & 0x1) * 255;
+                        let six: u8 = ((pixel >> 5) & 0x1) * 255;
+                        let seven: u8 = ((pixel >> 6) & 0x1) * 255;
+                        let eight: u8 = ((pixel >> 7) & 0x1) * 255;
+
+                        [eight, seven, six, five, four, three, two, one]
+                    })
+                    .collect();
+
+                let gray_image = GrayImage::from_raw(width, height, gray_contents)
+                    .expect("should be able to create grayscale image");
+                gray_image.write_to(&mut png_writer, image::ImageFormat::Png)?;
+            }
             RawBitmapType::GrayscaleTwo => {
                 // We have four pixels in every byte.
                 let gray_contents: Vec<u8> = raw_format

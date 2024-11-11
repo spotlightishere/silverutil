@@ -9,6 +9,7 @@ use crate::{little_helper::LittleHelper, SilverError};
 #[derive(Serialize_repr, Deserialize_repr, PartialEq, Debug)]
 #[repr(u16)]
 pub enum RawBitmapType {
+    Grayscale = 0x0001,
     GrayscaleTwo = 0x0002,
     GrayscaleFour = 0x0004,
     GrayscaleEight = 0x0008,
@@ -24,6 +25,7 @@ impl TryFrom<u16> for RawBitmapType {
 
     fn try_from(v: u16) -> Result<Self, Self::Error> {
         match v {
+            x if x == RawBitmapType::Grayscale as u16 => Ok(RawBitmapType::Grayscale),
             x if x == RawBitmapType::GrayscaleTwo as u16 => Ok(RawBitmapType::GrayscaleTwo),
             x if x == RawBitmapType::GrayscaleFour as u16 => Ok(RawBitmapType::GrayscaleFour),
             x if x == RawBitmapType::GrayscaleEight as u16 => Ok(RawBitmapType::GrayscaleEight),

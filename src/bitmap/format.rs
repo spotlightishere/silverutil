@@ -75,8 +75,8 @@ impl RawBitmapData {
             color_depth: helper.read_u16_le()?,
             padding_one: helper.read_u32_le()?,
             padding_two: helper.read_u32_le()?,
-            width: helper.read_u32_le()?,
             height: helper.read_u32_le()?,
+            width: helper.read_u32_le()?,
             // These will be filled in below.
             resource_id: 0,
             contents_length: 0,

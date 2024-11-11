@@ -18,7 +18,7 @@ pub struct BitmapImage {
     pub width: u32,
     /// The height of our bitmap data.
     pub height: u32,
-    /// The width this bitmap image is rendered at.
+    /// The height this bitmap image is rendered at.
     pub rendered_width: u16,
     /// The format this bitmap image is encoded in.
     pub format_type: RawBitmapType,
@@ -43,7 +43,7 @@ impl BitmapImage {
         println!("{} is {:?}", resource_id, raw_format.image_type);
         println!("\tColor depth: {:?}", raw_format.color_depth);
         println!(
-            "\tDimensions: {}x{} (rendered at {})",
+            "\tDimensions: {}x{} (rendered at width {})",
             raw_format.width, raw_format.height, raw_format.rendered_width
         );
 
@@ -53,26 +53,15 @@ impl BitmapImage {
             return Ok(None);
         }
 
-        // TODO(spotlightishere): Is this really how this field is used,
-        // or are there actually two fields indicating orientation (landscape/portrait)?
-        let width: u32;
-        let height: u32;
-        if raw_format.rendered_width as u32 == raw_format.width {
-            width = raw_format.width;
-            height = raw_format.height;
-        } else if raw_format.image_type == RawBitmapType::GrayscaleEight {
-            width = raw_format.rendered_width as u32;
-            height = raw_format.width;
-        } else if raw_format.image_type == RawBitmapType::GrayscaleFour {
-            width = raw_format.rendered_width as u32 * 2;
-            height = raw_format.width;
-        } else if raw_format.image_type == RawBitmapType::GrayscaleTwo {
-            width = raw_format.rendered_width as u32 * 4;
-            height = raw_format.width;
-        } else {
-            width = raw_format.height;
-            height = raw_format.width;
-        }
+        // TODO(spotlightishere): Is this really how the rendered_width field is used,
+        // or are there fields indicating orientation (landscape/portrait)?
+        let height = raw_format.height;
+        let width: u32 = match raw_format.image_type {
+            RawBitmapType::GrayscaleTwo => raw_format.rendered_width as u32 * 4,
+            RawBitmapType::GrayscaleFour => raw_format.rendered_width as u32 * 2,
+            RawBitmapType::GrayscaleEight => raw_format.rendered_width as u32,
+            _ => raw_format.width,
+        };
 
         // Now, convert our bitmap data to a PNG representation.
         let mut png_writer = Cursor::new(Vec::new());

@@ -1,7 +1,7 @@
 use std::io::Cursor;
 
 use crate::{
-    bitmap::format::{RawBitmapData, RawBitmapType},
+    bitmap::format::{FirmwareType, RawBitmapData, RawBitmapType},
     SilverError,
 };
 use image::{GrayImage, RgbImage, RgbaImage};
@@ -36,7 +36,8 @@ impl BitmapImage {
             return Ok(None);
         }
 
-        let raw_format = RawBitmapData::parse(raw_data.clone())?;
+        println!("Raw data: {}", hex::encode(raw_data.clone()));
+        let raw_format = RawBitmapData::parse(raw_data)?;
 
         // TODO(spotlightishere): Remove
         let resource_id = raw_format.resource_id;
@@ -53,14 +54,20 @@ impl BitmapImage {
             return Ok(None);
         }
 
+        // On iPod nanos or iPods equipped with LCDs,
+        // we need to respect the rendered_width field.
+        //
         // TODO(spotlightishere): Is this really how the rendered_width field is used,
         // or are there fields indicating orientation (landscape/portrait)?
         let height = raw_format.height;
-        let width: u32 = match raw_format.image_type {
-            RawBitmapType::GrayscaleTwo => raw_format.rendered_width as u32 * 4,
-            RawBitmapType::GrayscaleFour => raw_format.rendered_width as u32 * 2,
-            RawBitmapType::GrayscaleEight => raw_format.rendered_width as u32,
-            _ => raw_format.width,
+        let width = match raw_format.header_format {
+            FirmwareType::Monochrome => raw_format.width,
+            FirmwareType::Nano | FirmwareType::LCD => match raw_format.image_type {
+                RawBitmapType::GrayscaleTwo => raw_format.rendered_width as u32 * 4,
+                RawBitmapType::GrayscaleFour => raw_format.rendered_width as u32 * 2,
+                RawBitmapType::GrayscaleEight => raw_format.rendered_width as u32,
+                _ => raw_format.width,
+            },
         };
 
         // Now, convert our bitmap data to a PNG representation.
